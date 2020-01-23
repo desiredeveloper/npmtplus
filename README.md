@@ -39,6 +39,8 @@ cd ~/torch
 
 ./update.sh
 
+. ~/torch/install/bin/torch-activate
+
 luarocks install nn
 
 
