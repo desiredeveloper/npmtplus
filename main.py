@@ -129,7 +129,7 @@ class Encoder(nn.Module):
     #segment_encoding = [src len, src len, batch size, segment_dim*num_directions]
     #hidden = [n layers * num_directions, batch size, hid dim]
 
-    hidden = torch.tanh(self.fc(torch.cat((hidden[-2::],hidden[-1::]),dim=1)))
+    hidden = torch.tanh(self.fc(torch.cat((hidden[-2],hidden[-1]),dim=1)))
 
     return segment_encoding,hidden
 
@@ -178,12 +178,12 @@ class Attention(nn.Module):
     self.attn = nn.Linear((enc_hid_dim * 2) + dec_hid_dim, dec_hid_dim)
     self.v = nn.Linear(dec_hid_dim, 1, bias = False)
 
-  def forward(self, hidden, encoder_outputs):
+  def forward(self, hidden, encoder_outputs, output_target_decoder):
       
     #hidden = [batch size, dec hid dim]
-    #encoder_outputs = [src len, batch size, enc hid dim * 2]
-    
-    batch_size = encoder_outputs.shape[1]
+    #encoder_outputs = [src len, src len, batch size, enc hid dim * 2]
+    #output_target_decoder = []
+    batch_size = encoder_outputs.shape[2]
     src_len = encoder_outputs.shape[0]
     
     #repeat decoder hidden state src_len times
@@ -195,11 +195,9 @@ class Attention(nn.Module):
     #encoder_outputs = [batch size, src len, enc hid dim * 2]
     
     energy = torch.tanh(self.attn(torch.cat((hidden, encoder_outputs), dim = 2))) 
-    
     #energy = [batch size, src len, dec hid dim]
 
     attention = self.v(energy).squeeze(2)
-    
     #attention= [batch size, src len]
     
     return F.softmax(attention, dim=1)
@@ -220,7 +218,10 @@ class Decoder(nn.Module):
   def __init__(self, output_dim, embed_dim, hidden_dim,segment_dim,n_layers, dropout, attention):
     super().__init__()
     self.output_dim = output_dim
+    self.n_layers = n_layers
+    self.hidden_dim = hidden_dim
     self.attention = attention
+    self.device = device
     self.embedding = nn.Embedding(output_dim, embed_dim)
     
     '''
@@ -245,9 +246,9 @@ class Decoder(nn.Module):
     #embedded = [1, batch size, emb dim]
     
     hidden_target_decoder = torch.randn(self.n_layers, batch_size, self.hidden_dim).to(self.device)
-    output,hidden_target_decoder = self.rnn(embedded,hidden_target_decoder)
+    output_target_decoder,hidden_target_decoder = self.rnn(embedded,hidden_target_decoder)
         
-    a = self.attention(hidden, encoder_outputs)
+    a = self.attention(hidden, encoder_outputs, output_target_decoder)
     #a = [batch size, src len]
     
     a = a.unsqueeze(1)
