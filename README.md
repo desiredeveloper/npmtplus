@@ -15,11 +15,11 @@ sudo groupadd docker
 sudo usermod -aG docker ${USER}
 sudo chmod 666 /var/run/docker.sock
 ```
-## Pull nvidia-cuda environment
+## Pull nvidia-cuda image
 ```
 docker pull nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
 ```
-## To leverage GPUs in docker containers
+## Leverage GPU support inside docker containers
 ```
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
 curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
@@ -36,6 +36,8 @@ where 5aafb863776b is image id of docker image pulled
 
 ## Start the container and run the following after getting into the container
 ```
+docker exec -it npmt bash
+
 apt-get update
 apt-get install git
 apt-get -y install sudo
