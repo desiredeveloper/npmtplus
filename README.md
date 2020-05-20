@@ -23,5 +23,4 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FORCE_INLINES ${OpenMP_CXX_FLAGS}")
 
 luarocks make rocks/fairseq-scm-1.rockspec
 
-export LD_LIBRARY_PATH=/anaconda3/envs/namita_env/lib:$LD_LIBRARY_PATH
 
