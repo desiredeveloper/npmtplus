@@ -310,12 +310,15 @@ class NP2MT(nn.Module):
     batch_size = src.shape[1]
     trg_len = trg.shape[0]
     trg_vocab_size = self.decoder.output_dim
+    
+    ''' moved this to Decoder now
     # later to be passed in constructor (currently accessing through Globals)
     sop_symbol = TRG.vocab.stoi['<sop>']
     eop_symbol = TRG.vocab.stoi['<eop>']
     
     #tensor to store decoder outputs
     outputs = torch.zeros(trg_len, batch_size, trg_vocab_size).to(self.device)
+    '''
     
     #encoder_outputs is representation of all phrases states of the input sequence, back and forwards
     #hidden is the final forward and backward hidden states, passed through a linear layer (batch_size*hidden_dim)
