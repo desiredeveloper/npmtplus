@@ -67,16 +67,16 @@ print(f"Number of testing examples: {len(test_data.examples)}")
 vars(train_data.examples[0])
 
 SRC.build_vocab(train_data, min_freq = 2)
-TRG.build_vocab(train_data, min_freq = 2)
+TRG.build_vocab(train_data, min_freq = 2,specials=['<pad>','<sop>','<eop>'])
 
 print(f"Unique tokens in source (en) vocabulary: {len(SRC.vocab)}")
 print(f"Unique tokens in target (hi) vocabulary: {len(TRG.vocab)}")
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-device
+device 
 
-BATCH_SIZE = 1
+BATCH_SIZE = 2
 
 train_iterator, valid_iterator, test_iterator = BucketIterator.splits(
     (train_data, valid_data, test_data),
@@ -126,7 +126,7 @@ class Encoder(nn.Module):
     #segment_encoding = [src len* (src len+1)/2, batch size, segment_dim*num_directions]
     #hidden = [n layers * num_directions, batch size, hid dim]
 
-    hidden = torch.tanh(self.fc(torch.cat((hidden[-2],hidden[-1]),dim=1)))
+    # hidden = torch.tanh(self.fc(torch.cat((hidden[-2],hidden[-1]),dim=1)))
 
     return segment_encoding,hidden
 
@@ -227,49 +227,70 @@ class Decoder(nn.Module):
     self.hidden_dim = hidden_dim
     self.attention = attention
     self.device = device
-    self.embedding = nn.Embedding(output_dim, embed_dim)
-    
-    '''
-    Not sure what are the inputs to Target Encoder, I am initializing it 
-    with randomly hidden tensor
-    '''
+    self.embedding = nn.Embedding(self.output_dim, embed_dim)
     self.rnn = nn.GRU(embed_dim,hidden_dim,n_layers,dropout=dropout)
-    self.fc_out = nn.Linear((hidden_dim * 2) + hidden_dim + embed_dim, output_dim)
+    self.rnn = nn.GRU(embed_dim,hidden_dim,n_layers,dropout=dropout)
+    self.segmentRnn = nn.GRU(hidden_dim*3,hidden_dim,n_layers,dropout=dropout)
+    self.fc_out = nn.Linear((hidden_dim * 2) + hidden_dim + embed_dim, self.output_dim)
     self.dropout = nn.Dropout(dropout)
     
   def forward(self, input, hidden, encoder_outputs):
           
-    #input = [batch size]
+    #input = [target_len,batch size]
     #hidden = [batch size, dec hid dim]
     #encoder_outputs = [src len, batch size, enc hid dim * 2]
     
-    batch_size = input.shape[0]
-    input = input.unsqueeze(0)
-    #input = [1, batch size]
+    embedded = self.embedding(input)
+    #embedded = [target_len, batch size, emb dim]
     
-    embedded = self.dropout(self.embedding(input))
-    #embedded = [1, batch size, emb dim]
-    
-    hidden_target_decoder = torch.randn(self.n_layers, batch_size, self.hidden_dim).to(self.device)
-    output_target_decoder,hidden_target_decoder = self.rnn(embedded,hidden_target_decoder)
-    #output_target_decoder = [1, batch size, hidden_dim]
+    output_target_decoder,hidden_target_decoder = self.rnn(embedded)
+    #output_target_decoder = [target_len, batch size, hidden_dim]
     #hidden_target_decoder = [n layers , batch size, hidden_dim]
-        
-    a = self.attention(encoder_outputs, output_target_decoder.squeeze(0))
-    #a = [batch size,  no. of segments]
-    a = a.unsqueeze(1)
-    #a = [batch size, 1,  no. of segments]
-    encoder_outputs = encoder_outputs.permute(1, 0, 2)
-    #encoder_outputs = [batch size,  no. of segments, enc hid dim * 2]
-    weighted = torch.bmm(a, encoder_outputs)
-    #weighted = [batch size, 1, enc hid dim * 2]
-    weighted = weighted.permute(1, 0, 2)
-    #weighted = [1, batch size, enc hid dim * 2]
     
-    rnn_input = torch.cat((embedded, weighted), dim = 2)
-    #rnn_input = [1, batch size, (enc hid dim * 2) + emb dim]
+    trg_len = input.shape[0]
+    batch_size = input.shape[1]
+    trg_vocab_size = self.output_dim
+    # later to be passed in constructor (currently accessing through Globals)
+    sop_symbol = TRG.vocab.stoi['<sop>']
+    eop_symbol = TRG.vocab.stoi['<eop>']
+    
+    for start in range(trg_len):
+      for phraseLen in range(1, trg_len-start):
+        end = start + phraseLen
         
-    output, hidden = self.rnn(rnn_input, hidden.unsqueeze(0))
+        a = self.attention(encoder_outputs, output_target_decoder[end,:,:].squeeze(0))
+        #a = [batch size,  no. of segments]
+        a = a.unsqueeze(1)
+        #a = [batch size, 1,  no. of segments]
+        encoder_outputs = encoder_outputs.permute(1, 0, 2)
+        #encoder_outputs = [batch size,  no. of segments, enc hid dim * 2]
+        weighted = torch.bmm(a, encoder_outputs)
+        #weighted = [batch size, 1, enc hid dim * 2]
+        weighted = weighted.permute(1, 0, 2)
+        #weighted = [1, batch size, enc hid dim * 2]
+        
+        
+        sop_vector = (torch.ones(1,batch_size,dtype=torch.int64)*sop_symbol).to(self.device)
+        input = input[start:end,:]
+        input = torch.cat((sop_vector,input),0)
+        eop_vector = (torch.ones(1,batch_size,dtype=torch.int64)*eop_symbol).to(self.device)
+        input = torch.cat((input,eop_vector),0)
+        
+        phraseEmbedded = self.embedding(input)
+
+        
+        for t in range(phraseLen+1):
+          rnn_input = torch.cat((embedded[start::], weighted), dim = 2)
+          output, hidden = self.segmentRnn(rnn_input, hidden)
+        #rnn_input = [1, batch size, (enc hid dim * 2) + emb dim]
+        
+        #insert input token embedding, previous hidden state and all encoder hidden states
+        #receive output tensor (predictions) and new hidden state
+        
+
+    return outputs
+    
+        
     #output = [seq len, batch size, dec hid dim * n directions]
     #hidden = [n layers * n directions, batch size, dec hid dim]
     
@@ -277,7 +298,7 @@ class Decoder(nn.Module):
     #output = [1, batch size, dec hid dim]
     #hidden = [1, batch size, dec hid dim]
     #this also means that output == hidden
-    assert (output == hidden).all()
+    # assert (output == hidden).all()
     
     embedded = embedded.squeeze(0)
     output = output.squeeze(0)
@@ -306,36 +327,17 @@ class NP2MT(nn.Module):
     batch_size = src.shape[1]
     trg_len = trg.shape[0]
     trg_vocab_size = self.decoder.output_dim
+    # later to be passed in constructor (currently accessing through Globals)
+    sop_symbol = TRG.vocab.stoi['<sop>']
+    eop_symbol = TRG.vocab.stoi['<eop>']
     
     #tensor to store decoder outputs
     outputs = torch.zeros(trg_len, batch_size, trg_vocab_size).to(self.device)
     
-    #encoder_outputs is all hidden states of the input sequence, back and forwards
-    #hidden is the final forward and backward hidden states, passed through a linear layer
+    #encoder_outputs is representation of all phrases states of the input sequence, back and forwards
+    #hidden is the final forward and backward hidden states, passed through a linear layer (batch_size*hidden_dim)
     encoder_outputs, hidden = self.encoder(src)
-            
-    #first input to the decoder is the <sos> tokens
-    input = trg[0,:]
-    
-    for t in range(1, trg_len):
-        
-      #insert input token embedding, previous hidden state and all encoder hidden states
-      #receive output tensor (predictions) and new hidden state
-      output, hidden = self.decoder(input, hidden, encoder_outputs)
-      
-      #place predictions in a tensor holding predictions for each token
-      outputs[t] = output
-      
-      #decide if we are going to use teacher forcing or not
-      teacher_force = random.random() < teacher_forcing_ratio
-      
-      #get the highest predicted token from our predictions
-      top1 = output.argmax(1) 
-      
-      #if teacher forcing, use actual next token as next input
-      #if not, use predicted token
-      input = trg[t] if teacher_force else top1
-
+    output, hidden = self.decoder(trg, hidden, encoder_outputs)
     return outputs
 
 attn = Attention(hidden_dim, hidden_dim)
