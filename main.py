@@ -271,43 +271,26 @@ class Decoder(nn.Module):
         
         
         sop_vector = (torch.ones(1,batch_size,dtype=torch.int64)*sop_symbol).to(self.device)
-        input = input[start:end,:]
-        input = torch.cat((sop_vector,input),0)
+        input_phrase = input[start:end,:]
+        input_phrase = torch.cat((sop_vector,input_phrase),0)
         eop_vector = (torch.ones(1,batch_size,dtype=torch.int64)*eop_symbol).to(self.device)
-        input = torch.cat((input,eop_vector),0)
+        input_phrase = torch.cat((input_phrase,eop_vector),0)
         
-        phraseEmbedded = self.embedding(input)
-
+        phraseEmbedded = self.embedding(input_phrase)
         
         for t in range(phraseLen+1):
-          rnn_input = torch.cat((embedded[start::], weighted), dim = 2)
-          output, hidden = self.segmentRnn(rnn_input, hidden)
-        #rnn_input = [1, batch size, (enc hid dim * 2) + emb dim]
+          currEmbedded = phraseEmbedded[t,:,:]
+          rnn_input = torch.cat((currEmbedded.unsqueeze(0), weighted), dim = 2)
+          output, hidden = self.segmentRnn(rnn_input)
+          
+          output = output.squeeze(0)
+          weighted = weighted.squeeze(0)
+          
+          prediction = self.fc_out(torch.cat((output, weighted, currEmbedded), dim = 1))
+          #prediction = [batch size, output dim]
+          
+          return prediction, hidden.squeeze(0)
         
-        #insert input token embedding, previous hidden state and all encoder hidden states
-        #receive output tensor (predictions) and new hidden state
-        
-
-    return outputs
-    
-        
-    #output = [seq len, batch size, dec hid dim * n directions]
-    #hidden = [n layers * n directions, batch size, dec hid dim]
-    
-    #seq len, n layers and n directions will always be 1 in this decoder, therefore:
-    #output = [1, batch size, dec hid dim]
-    #hidden = [1, batch size, dec hid dim]
-    #this also means that output == hidden
-    # assert (output == hidden).all()
-    
-    embedded = embedded.squeeze(0)
-    output = output.squeeze(0)
-    weighted = weighted.squeeze(0)
-    
-    prediction = self.fc_out(torch.cat((output, weighted, embedded), dim = 1))
-    #prediction = [batch size, output dim]
-    
-    return prediction, hidden.squeeze(0)
 
 class NP2MT(nn.Module):
   def __init__(self, encoder, decoder, device):
