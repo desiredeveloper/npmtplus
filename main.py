@@ -29,6 +29,7 @@ np.random.seed(SEED)
 torch.manual_seed(SEED)
 torch.cuda.manual_seed(SEED)
 torch.backends.cudnn.deterministic = True
+torch.autograd.set_detect_anomaly(True)
 
 spacy_en = spacy.load('en')
 
@@ -167,7 +168,7 @@ class Encoder(nn.Module):
     dp = torch.cat((dp_forward,dp_backward),dim=3)
     dp_indices = torch.triu_indices(N, N)
     dp = dp[dp_indices[0],dp_indices[1]]
-    return dp,torch.cat((hidden_forward,hidden_backward),dim=0)
+    return dp,torch.cat((hidden_forward,hidden_backward),dim=2)
 
 """# Defining Attn Network"""
 '''
@@ -230,8 +231,9 @@ class Decoder(nn.Module):
     self.embedding = nn.Embedding(self.output_dim, embed_dim)
     self.rnn = nn.GRU(embed_dim,hidden_dim,n_layers,dropout=dropout)
     self.rnn = nn.GRU(embed_dim,hidden_dim,n_layers,dropout=dropout)
-    self.segmentRnn = nn.GRU(hidden_dim*3,hidden_dim,n_layers,dropout=dropout)
+    self.segmentRnn = nn.GRU(hidden_dim,hidden_dim,n_layers,dropout=dropout)
     self.fc_out = nn.Linear((hidden_dim * 2) + hidden_dim + embed_dim, self.output_dim)
+    self.soft = nn.LogSoftmax(dim=1)
     self.dropout = nn.Dropout(dropout)
     
   def forward(self, input, hidden, encoder_outputs):
@@ -254,43 +256,55 @@ class Decoder(nn.Module):
     sop_symbol = TRG.vocab.stoi['<sop>']
     eop_symbol = TRG.vocab.stoi['<eop>']
     
-    for start in range(trg_len):
-      for phraseLen in range(1, trg_len-start):
-        end = start + phraseLen
-        
-        a = self.attention(encoder_outputs, output_target_decoder[end,:,:].squeeze(0))
-        #a = [batch size,  no. of segments]
-        a = a.unsqueeze(1)
-        #a = [batch size, 1,  no. of segments]
-        encoder_outputs = encoder_outputs.permute(1, 0, 2)
-        #encoder_outputs = [batch size,  no. of segments, enc hid dim * 2]
-        weighted = torch.bmm(a, encoder_outputs)
-        #weighted = [batch size, 1, enc hid dim * 2]
-        weighted = weighted.permute(1, 0, 2)
-        #weighted = [1, batch size, enc hid dim * 2]
-        
+    alpha = torch.zeros(batch_size,trg_len+1).to(self.device)
+    alpha[:,0] = 1 
+    for end in range(trg_len):
+    
+      a = self.attention(encoder_outputs, output_target_decoder[end])
+      #a = [batch size,  no. of segments]
+      a = a.unsqueeze(1)
+      #a = [batch size, 1,  no. of segments]
+      encoder_outputs = encoder_outputs.permute(1, 0, 2)
+      #encoder_outputs = [batch size,  no. of segments, enc hid dim * 2]
+      weighted = torch.bmm(a, encoder_outputs)
+      #weighted = [batch size, 1, enc hid dim * 2]
+      weighted = weighted.permute(1, 0, 2)
+      #weighted = [1, batch size, enc hid dim * 2]
+      encoder_outputs = encoder_outputs.permute(1, 0, 2)
+
+      for phraseLen in range(end+1,0,-1):
+        start = end - phraseLen + 1
         
         sop_vector = (torch.ones(1,batch_size,dtype=torch.int64)*sop_symbol).to(self.device)
-        input_phrase = input[start:end,:]
+        input_phrase = input[start:end+1,:]
         input_phrase = torch.cat((sop_vector,input_phrase),0)
         eop_vector = (torch.ones(1,batch_size,dtype=torch.int64)*eop_symbol).to(self.device)
         input_phrase = torch.cat((input_phrase,eop_vector),0)
         
         phraseEmbedded = self.embedding(input_phrase)
         
+        # currEmbedded = phraseEmbedded[0,:,:]
+        # rnn_input = torch.cat((currEmbedded.unsqueeze(0), weighted), dim = 2)
+        
+        phraseProb = torch.ones(batch_size).to(self.device)
         for t in range(phraseLen+1):
-          currEmbedded = phraseEmbedded[t,:,:]
-          rnn_input = torch.cat((currEmbedded.unsqueeze(0), weighted), dim = 2)
+          rnn_input = phraseEmbedded[t].unsqueeze(0)
           output, hidden = self.segmentRnn(rnn_input)
           
           output = output.squeeze(0)
           weighted = weighted.squeeze(0)
+          rnn_input = rnn_input.squeeze(0)
           
-          prediction = self.fc_out(torch.cat((output, weighted, currEmbedded), dim = 1))
+          prediction = self.fc_out(torch.cat((output, weighted, rnn_input), dim = 1))
           #prediction = [batch size, output dim]
+          probabilities = self.soft(prediction)
           
-          return prediction, hidden.squeeze(0)
+          phraseProb *= torch.exp(probabilities[torch.arange(batch_size),input_phrase[t+1]])
         
+        alpha[:,end+1] = alpha[:,end+1].clone() + phraseProb*alpha[:,start].clone()
+        
+    return alpha
+      
 
 class NP2MT(nn.Module):
   def __init__(self, encoder, decoder, device):
@@ -323,8 +337,8 @@ class NP2MT(nn.Module):
     #encoder_outputs is representation of all phrases states of the input sequence, back and forwards
     #hidden is the final forward and backward hidden states, passed through a linear layer (batch_size*hidden_dim)
     encoder_outputs, hidden = self.encoder(src)
-    output, hidden = self.decoder(trg, hidden, encoder_outputs)
-    return outputs
+    output = self.decoder(trg[1:], hidden, encoder_outputs)
+    return output[:,-1]
 
 attn = Attention(hidden_dim, hidden_dim)
 enc = Encoder(input_dim, embed_dim, hidden_dim, segment_dim, n_layers, dropout, segment_threshold, device)
@@ -365,18 +379,7 @@ def train(model, iterator, optimizer, criterion, clip):
     
     output = model(src, trg)
     
-    #trg = [trg len, batch size]
-    #output = [trg len, batch size, output dim]
-    
-    output_dim = output.shape[-1]
-    
-    output = output[1:].view(-1, output_dim)
-    trg = trg[1:].view(-1)
-    
-    #trg = [(trg len - 1) * batch size]
-    #output = [(trg len - 1) * batch size, output dim]
-    
-    loss = criterion(output, trg)
+    loss = -torch.log(output).mean()
     
     loss.backward()
     
@@ -436,23 +439,23 @@ for epoch in range(N_EPOCHS):
   start_time = time.time()
   
   train_loss = train(model, train_iterator, optimizer, criterion, CLIP)
-  valid_loss = evaluate(model, valid_iterator, criterion)
+  # valid_loss = evaluate(model, valid_iterator, criterion)
   
   end_time = time.time()
   
   epoch_mins, epoch_secs = epoch_time(start_time, end_time)
   
-  if valid_loss < best_valid_loss:
-    best_valid_loss = valid_loss
-    torch.save(model.state_dict(), 'npmt-model.pt')
+  # if valid_loss < best_valid_loss:
+  #   best_valid_loss = valid_loss
+  #   torch.save(model.state_dict(), 'npmt-model.pt')
   
   print(f'Epoch: {epoch+1:02} | Time: {epoch_mins}m {epoch_secs}s')
   print(f'\tTrain Loss: {train_loss:.3f} | Train PPL: {math.exp(train_loss):7.3f}')
-  print(f'\t Val. Loss: {valid_loss:.3f} |  Val. PPL: {math.exp(valid_loss):7.3f}')
+  # print(f'\t Val. Loss: {valid_loss:.3f} |  Val. PPL: {math.exp(valid_loss):7.3f}')
 
-model.load_state_dict(torch.load('npmt-model.pt'))
+# model.load_state_dict(torch.load('npmt-model.pt'))
 
-test_loss = evaluate(model, test_iterator, criterion)
+# test_loss = evaluate(model, test_iterator, criterion)
 
-print(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')
+# print(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')
 
