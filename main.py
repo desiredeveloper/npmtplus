@@ -93,6 +93,7 @@ segment_dim = 10
 n_layers = 6
 dropout = 0.4
 segment_threshold = 5
+temperature = 0.1
 
 """# Building Encoder"""
 
@@ -233,9 +234,17 @@ class Decoder(nn.Module):
     self.rnn = nn.GRU(embed_dim,hidden_dim,n_layers,dropout=dropout)
     self.segmentRnn = nn.GRU(hidden_dim,hidden_dim,n_layers,dropout=dropout)
     self.fc_out = nn.Linear((hidden_dim * 2) + hidden_dim + embed_dim, self.output_dim)
-    self.soft = nn.LogSoftmax(dim=1)
+    # self.soft = nn.LogSoftmax(dim=1)
+    self.soft = nn.Softmax(dim=1)
     self.dropout = nn.Dropout(dropout)
     
+  def stable_softmax(self,x):
+    z = x - torch.max(x,dim=1,keepdim=True).values
+    numerator = torch.exp(z)
+    denominator = torch.clamp(torch.sum(numerator, dim=1, keepdims=True), min = 0.0, max = 10.0)
+    softmax = numerator / denominator
+    return softmax
+  
   def forward(self, input, hidden, encoder_outputs):
           
     #input = [target_len,batch size]
@@ -297,9 +306,11 @@ class Decoder(nn.Module):
           
           prediction = self.fc_out(torch.cat((output, weighted, rnn_input), dim = 1))
           #prediction = [batch size, output dim]
-          probabilities = self.soft(prediction)
-          
-          phraseProb *= torch.exp(probabilities[torch.arange(batch_size),input_phrase[t+1]])
+          # probabilities = self.soft(prediction)
+          # phraseProb *= torch.exp(probabilities[torch.arange(batch_size),input_phrase[t+1]])
+
+          probabilities = self.stable_softmax(prediction)
+          phraseProb *= probabilities[torch.arange(batch_size),input_phrase[t+1]]
         
         alpha[:,end+1] = alpha[:,end+1].clone() + phraseProb*alpha[:,start].clone()
         
@@ -380,12 +391,24 @@ def train(model, iterator, optimizer, criterion, clip):
     output = model(src, trg)
     
     loss = -torch.log(output).mean()
-    
+
+
     loss.backward()
+    
+    # print("Before optimization step\n\n")
+    # for name, param in model.named_parameters():
+    #   if param.requires_grad:
+    #       print(name, torch.isnan(param.data).any())
     
     torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
     
     optimizer.step()
+
+    # print("After optimization step\n\n")
+
+    # for name, param in model.named_parameters():
+    #   if param.requires_grad:
+    #       print(name, torch.isnan(param.data).any())
     
     epoch_loss += loss.item()
     
