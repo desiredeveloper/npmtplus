@@ -201,11 +201,18 @@ class Attention(nn.Module):
     
     energy = torch.tanh(self.attn(torch.cat((output_target_decoder, encoder_outputs), dim = 2))) 
     #energy = [batch size,  no. of segments, dec hid dim]
-
     attention = self.v(energy).squeeze(2)
     #attention= [batch size,  no. of segments]
+    a = F.softmax(attention, dim=1)
+    #a = [batch size,  no. of segments]
+    a = a.unsqueeze(1)
+    #a = [batch size, 1,  no. of segments]
+    weighted = torch.bmm(a, encoder_outputs)
+    #weighted = [batch size, 1, enc hid dim * 2]
+    weighted = weighted.permute(1, 0, 2)
+    #weighted = [1, batch size, enc hid dim * 2]
+    return weighted
     
-    return F.softmax(attention, dim=1)
 
 """# Decoder Parameters"""
 
@@ -241,7 +248,7 @@ class Decoder(nn.Module):
   def stable_softmax(self,x):
     z = x - torch.max(x,dim=1,keepdim=True).values
     numerator = torch.exp(z)
-    denominator = torch.clamp(torch.sum(numerator, dim=1, keepdims=True), min = 0.0, max = 10.0)
+    denominator = torch.sum(numerator, dim=1, keepdims=True)
     softmax = numerator / denominator
     return softmax
   
@@ -265,24 +272,13 @@ class Decoder(nn.Module):
     sop_symbol = TRG.vocab.stoi['<sop>']
     eop_symbol = TRG.vocab.stoi['<eop>']
     
-    alpha = torch.zeros(batch_size,trg_len+1).to(self.device)
-    alpha[:,0] = 1 
-    for end in range(trg_len):
-    
-      a = self.attention(encoder_outputs, output_target_decoder[end])
-      #a = [batch size,  no. of segments]
-      a = a.unsqueeze(1)
-      #a = [batch size, 1,  no. of segments]
-      encoder_outputs = encoder_outputs.permute(1, 0, 2)
-      #encoder_outputs = [batch size,  no. of segments, enc hid dim * 2]
-      weighted = torch.bmm(a, encoder_outputs)
-      #weighted = [batch size, 1, enc hid dim * 2]
-      weighted = weighted.permute(1, 0, 2)
-      #weighted = [1, batch size, enc hid dim * 2]
-      encoder_outputs = encoder_outputs.permute(1, 0, 2)
+    alpha = torch.zeros(batch_size,trg_len).to(self.device)
+    alpha[:,0] = 1
+    for end in range(1,trg_len):
 
-      for phraseLen in range(end+1,0,-1):
+      for phraseLen in range(end,0,-1):
         start = end - phraseLen + 1
+        weighted = self.attention(encoder_outputs, output_target_decoder[start-1])
         
         sop_vector = (torch.ones(1,batch_size,dtype=torch.int64)*sop_symbol).to(self.device)
         input_phrase = input[start:end+1,:]
@@ -296,7 +292,7 @@ class Decoder(nn.Module):
         # rnn_input = torch.cat((currEmbedded.unsqueeze(0), weighted), dim = 2)
         
         phraseProb = torch.ones(batch_size).to(self.device)
-        for t in range(phraseLen+1):
+        for t in range(input_phrase.shape[0]-1):
           rnn_input = phraseEmbedded[t].unsqueeze(0)
           output, hidden = self.segmentRnn(rnn_input)
           
@@ -312,11 +308,10 @@ class Decoder(nn.Module):
           probabilities = self.stable_softmax(prediction)
           phraseProb *= probabilities[torch.arange(batch_size),input_phrase[t+1]]
         
-        alpha[:,end+1] = alpha[:,end+1].clone() + phraseProb*alpha[:,start].clone()
-        
+        alpha[:,end] = alpha[:,end].clone() + phraseProb*alpha[:,start-1].clone()
+    
     return alpha
       
-
 class NP2MT(nn.Module):
   def __init__(self, encoder, decoder, device):
     super().__init__()
@@ -348,7 +343,7 @@ class NP2MT(nn.Module):
     #encoder_outputs is representation of all phrases states of the input sequence, back and forwards
     #hidden is the final forward and backward hidden states, passed through a linear layer (batch_size*hidden_dim)
     encoder_outputs, hidden = self.encoder(src)
-    output = self.decoder(trg[1:], hidden, encoder_outputs)
+    output = self.decoder(trg, hidden, encoder_outputs)
     return output[:,-1]
 
 attn = Attention(hidden_dim, hidden_dim)
@@ -391,7 +386,6 @@ def train(model, iterator, optimizer, criterion, clip):
     output = model(src, trg)
     
     loss = -torch.log(output).mean()
-
 
     loss.backward()
     
