@@ -56,7 +56,7 @@ TRG = Field(tokenize = tokenize_hi,
             lower = True)
 
 train_data, valid_data, test_data  = TranslationDataset.splits(
-                                      path='IITB_small',
+                                      path='data/IITB_len7',
                                       validation='dev',
                                       exts = ('.en', '.hi'), 
                                       fields = (SRC, TRG))
@@ -90,7 +90,7 @@ input_dim = len(SRC.vocab)
 embed_dim = 10
 hidden_dim = 10
 segment_dim = 10
-n_layers = 6
+n_layers = 2
 dropout = 0.4
 segment_threshold = 5
 temperature = 0.1
@@ -111,7 +111,7 @@ class Encoder(nn.Module):
     self.rnn = nn.GRU(embed_dim,hidden_dim,n_layers,dropout=dropout,bidirectional=True)
 
     self.segmentRnn = nn.GRU(hidden_dim*2,segment_dim,n_layers,dropout=dropout)
-    self.fc = nn.Linear(hidden_dim*2,hidden_dim)
+    # self.fc = nn.Linear(hidden_dim*2,hidden_dim)
     self.dropout = nn.Dropout(dropout)
 
   def forward(self,input):
@@ -246,9 +246,11 @@ class Decoder(nn.Module):
     self.dropout = nn.Dropout(dropout)
     
   def stable_softmax(self,x):
+    
     z = x - torch.max(x,dim=1,keepdim=True).values
     numerator = torch.exp(z)
     denominator = torch.sum(numerator, dim=1, keepdims=True)
+    # print("max",denominator.max().item(),"min",denominator.min().item())
     softmax = numerator / denominator
     return softmax
   
@@ -307,7 +309,7 @@ class Decoder(nn.Module):
 
           probabilities = self.stable_softmax(prediction)
           phraseProb *= probabilities[torch.arange(batch_size),input_phrase[t+1]]
-        
+          
         alpha[:,end] = alpha[:,end].clone() + phraseProb*alpha[:,start-1].clone()
     
     return alpha
@@ -373,37 +375,54 @@ criterion = nn.CrossEntropyLoss(ignore_index = TRG_PAD_IDX)
 def train(model, iterator, optimizer, criterion, clip):
   
   model.train()
-  
   epoch_loss = 0
-  
   for i, batch in enumerate(iterator):
-    
     src = batch.src
     trg = batch.trg
-    
     optimizer.zero_grad()
-    
     output = model(src, trg)
     
+    # print("range is")
+    # print(output.max().item(),output.min().item())
+  
+    # print((output==0).any())
     loss = -torch.log(output).mean()
-
+    print("loss is",loss)
     loss.backward()
-    
-    # print("Before optimization step\n\n")
-    # for name, param in model.named_parameters():
-    #   if param.requires_grad:
-    #       print(name, torch.isnan(param.data).any())
+  
+    '''
+    print("Before optimization step\n\n")
+
+    for param in model.parameters():
+      # if param.requires_grad:
+      # print(name)
+      print("param.data",torch.isfinite(param.data).all())
+      print("param.grad.data",torch.isfinite(param.grad.data).all(),"\n")
+    '''
+    epoch_loss += loss.item()
+    # try:
+    #   loss.backward()
+    # except:
+    #   print("Before optimization step\n\n")
+    #   for name, param in model.named_parameters():
+    #     if param.requires_grad:
+    #       if param.grad is None:
+    #         print(name)
+    #       print(name, torch.isnan(param.grad.data).any())
+    #   exit()
     
     torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
     
     optimizer.step()
+    '''
+    print("After optimization step\n\n")
 
-    # print("After optimization step\n\n")
-
-    # for name, param in model.named_parameters():
-    #   if param.requires_grad:
-    #       print(name, torch.isnan(param.data).any())
-    
+    for param in model.parameters():
+      # if param.requires_grad:
+      # print(name)
+      print("param.data",torch.isfinite(param.data).all())
+      print("param.grad.data",torch.isfinite(param.grad.data).all(),"\n")
+    '''
     epoch_loss += loss.item()
     
   return epoch_loss / len(iterator)
