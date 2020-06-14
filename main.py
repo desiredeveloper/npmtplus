@@ -9,6 +9,7 @@ Original file is located at
 
 import torch
 import torch.nn as nn
+from torch.autograd import gradcheck
 import torch.nn.functional as F
 import torch.optim as optim
 
@@ -56,7 +57,7 @@ TRG = Field(tokenize = tokenize_hi,
             lower = True)
 
 train_data, valid_data, test_data  = TranslationDataset.splits(
-                                      path='data/IITB_len7',
+                                      path='data/IITB_mini7',
                                       validation='dev',
                                       exts = ('.en', '.hi'), 
                                       fields = (SRC, TRG))
@@ -241,8 +242,8 @@ class Decoder(nn.Module):
     self.rnn = nn.GRU(embed_dim,hidden_dim,n_layers,dropout=dropout)
     self.segmentRnn = nn.GRU(hidden_dim,hidden_dim,n_layers,dropout=dropout)
     self.fc_out = nn.Linear((hidden_dim * 2) + hidden_dim + embed_dim, self.output_dim)
-    # self.soft = nn.LogSoftmax(dim=1)
-    self.soft = nn.Softmax(dim=1)
+    self.soft = nn.LogSoftmax(dim=1)
+    # self.soft = nn.Softmax(dim=1)
     self.dropout = nn.Dropout(dropout)
     
   def stable_softmax(self,x):
@@ -275,10 +276,12 @@ class Decoder(nn.Module):
     eop_symbol = TRG.vocab.stoi['<eop>']
     
     alpha = torch.zeros(batch_size,trg_len).to(self.device)
-    alpha[:,0] = 1
+    # alpha[:,0] = 1
     for end in range(1,trg_len):
 
-      for phraseLen in range(end,0,-1):
+      x_i = torch.zeros(batch_size,min(end,segment_threshold)).to(self.device)
+      index = 0
+      for phraseLen in range(min(end,segment_threshold),0,-1):
         start = end - phraseLen + 1
         weighted = self.attention(encoder_outputs, output_target_decoder[start-1])
         
@@ -293,7 +296,7 @@ class Decoder(nn.Module):
         # currEmbedded = phraseEmbedded[0,:,:]
         # rnn_input = torch.cat((currEmbedded.unsqueeze(0), weighted), dim = 2)
         
-        phraseProb = torch.ones(batch_size).to(self.device)
+        phraseProb = torch.zeros(batch_size).to(self.device)
         for t in range(input_phrase.shape[0]-1):
           rnn_input = phraseEmbedded[t].unsqueeze(0)
           output, hidden = self.segmentRnn(rnn_input)
@@ -307,12 +310,28 @@ class Decoder(nn.Module):
           # probabilities = self.soft(prediction)
           # phraseProb *= torch.exp(probabilities[torch.arange(batch_size),input_phrase[t+1]])
 
-          probabilities = self.stable_softmax(prediction)
-          phraseProb *= probabilities[torch.arange(batch_size),input_phrase[t+1]]
-          
-        alpha[:,end] = alpha[:,end].clone() + phraseProb*alpha[:,start-1].clone()
+          probabilities = self.soft(prediction)
+          # test = gradcheck(self.soft, prediction, eps=1e-6, atol=1e-4)
+          # print(test)
+          phraseProb += probabilities[torch.arange(batch_size),input_phrase[t+1]]
+
+        temp_start = alpha[:,start-1].detach().clone()
+        x_i[:,index] = temp_start+phraseProb
+        index = index+1
+        '''
+        temp_end = alpha[:,end].detach().clone()
+        temp_start = alpha[:,start-1].detach().clone()
+        alpha[:,end] = temp_end + torch.exp(phraseProb)*temp_start
+        '''
+      alpha[:,end] = torch.logsumexp(x_i,dim=1)
+        
+        # print("alpha[",end,"] = alpha[",end,"] + phrase(",start,",",end,")*alpha[",start-1,"]")
+        # if torch.isnan(alpha).any():
+        #   print(alpha)
+        #   input()
+        #   alpha[alpha != alpha] = 0
     
-    return alpha
+    return alpha[:,-1]
       
 class NP2MT(nn.Module):
   def __init__(self, encoder, decoder, device):
@@ -346,7 +365,7 @@ class NP2MT(nn.Module):
     #hidden is the final forward and backward hidden states, passed through a linear layer (batch_size*hidden_dim)
     encoder_outputs, hidden = self.encoder(src)
     output = self.decoder(trg, hidden, encoder_outputs)
-    return output[:,-1]
+    return output
 
 attn = Attention(hidden_dim, hidden_dim)
 enc = Encoder(input_dim, embed_dim, hidden_dim, segment_dim, n_layers, dropout, segment_threshold, device)
@@ -386,7 +405,7 @@ def train(model, iterator, optimizer, criterion, clip):
     # print(output.max().item(),output.min().item())
   
     # print((output==0).any())
-    loss = -torch.log(output).mean()
+    loss = -output.mean()
     print("loss is",loss)
     loss.backward()
   
@@ -430,30 +449,14 @@ def train(model, iterator, optimizer, criterion, clip):
 def evaluate(model, iterator, criterion):
     
   model.eval()
-  
   epoch_loss = 0
   
   with torch.no_grad():
-
     for i, batch in enumerate(iterator):
-
         src = batch.src
         trg = batch.trg
-
         output = model(src, trg, 0) #turn off teacher forcing
-
-        #trg = [trg len, batch size]
-        #output = [trg len, batch size, output dim]
-
-        output_dim = output.shape[-1]
-        
-        output = output[1:].view(-1, output_dim)
-        trg = trg[1:].view(-1)
-
-        #trg = [(trg len - 1) * batch size]
-        #output = [(trg len - 1) * batch size, output dim]
-
-        loss = criterion(output, trg)
+        loss = -torch.log(output).mean()
 
         epoch_loss += loss.item()
       
