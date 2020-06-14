@@ -57,7 +57,7 @@ TRG = Field(tokenize = tokenize_hi,
             lower = True)
 
 train_data, valid_data, test_data  = TranslationDataset.splits(
-                                      path='data/IITB_mini7',
+                                      path='data/IITB_instance',
                                       validation='dev',
                                       exts = ('.en', '.hi'), 
                                       fields = (SRC, TRG))
@@ -302,7 +302,9 @@ class Decoder(nn.Module):
           output, hidden = self.segmentRnn(rnn_input)
           
           output = output.squeeze(0)
-          weighted = weighted.squeeze(0)
+          # Hack to work for 1 sized batch, Todo
+          if weighted.ndim == 3:
+            weighted = weighted.squeeze(0)
           rnn_input = rnn_input.squeeze(0)
           
           prediction = self.fc_out(torch.cat((output, weighted, rnn_input), dim = 1))
@@ -456,7 +458,7 @@ def evaluate(model, iterator, criterion):
         src = batch.src
         trg = batch.trg
         output = model(src, trg, 0) #turn off teacher forcing
-        loss = -torch.log(output).mean()
+        loss = -output.mean()
 
         epoch_loss += loss.item()
       
@@ -478,23 +480,23 @@ for epoch in range(N_EPOCHS):
   start_time = time.time()
   
   train_loss = train(model, train_iterator, optimizer, criterion, CLIP)
-  # valid_loss = evaluate(model, valid_iterator, criterion)
+  valid_loss = evaluate(model, valid_iterator, criterion)
   
   end_time = time.time()
   
   epoch_mins, epoch_secs = epoch_time(start_time, end_time)
   
-  # if valid_loss < best_valid_loss:
-  #   best_valid_loss = valid_loss
-  #   torch.save(model.state_dict(), 'npmt-model.pt')
+  if valid_loss < best_valid_loss:
+    best_valid_loss = valid_loss
+    torch.save(model.state_dict(), 'npmt-model.pt')
   
   print(f'Epoch: {epoch+1:02} | Time: {epoch_mins}m {epoch_secs}s')
   print(f'\tTrain Loss: {train_loss:.3f} | Train PPL: {math.exp(train_loss):7.3f}')
-  # print(f'\t Val. Loss: {valid_loss:.3f} |  Val. PPL: {math.exp(valid_loss):7.3f}')
+  print(f'\t Val. Loss: {valid_loss:.3f} |  Val. PPL: {math.exp(valid_loss):7.3f}')
 
 # model.load_state_dict(torch.load('npmt-model.pt'))
 
-# test_loss = evaluate(model, test_iterator, criterion)
+test_loss = evaluate(model, test_iterator, criterion)
 
-# print(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')
+print(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')
 
