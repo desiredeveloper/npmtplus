@@ -95,6 +95,7 @@ n_layers = 2
 dropout = 0.4
 segment_threshold = 5
 temperature = 0.1
+MAX_LENGTH = 50
 
 """# Building Encoder"""
 
@@ -229,117 +230,67 @@ DEC_PF_DIM = 512
 
 """# Building Decoder"""
 
-class Decoder(nn.Module):
-  def __init__(self, output_dim, embed_dim, hidden_dim,segment_dim,n_layers, dropout, attention):
+
+class TargetEncoder(nn.Module):
+  def __init__(self, output_dim, embed_dim, hidden_dim,segment_dim,n_layers, dropout):
     super().__init__()
     self.output_dim = output_dim
     self.n_layers = n_layers
-    self.hidden_dim = hidden_dim
-    self.attention = attention
-    self.device = device
     self.embedding = nn.Embedding(self.output_dim, embed_dim)
     self.rnn = nn.GRU(embed_dim,hidden_dim,n_layers,dropout=dropout)
-    self.rnn = nn.GRU(embed_dim,hidden_dim,n_layers,dropout=dropout)
-    self.segmentRnn = nn.GRU(hidden_dim,hidden_dim,n_layers,dropout=dropout)
-    self.fc_out = nn.Linear((hidden_dim * 2) + hidden_dim + embed_dim, self.output_dim)
-    self.soft = nn.LogSoftmax(dim=1)
-    # self.soft = nn.Softmax(dim=1)
     self.dropout = nn.Dropout(dropout)
-    
-  def stable_softmax(self,x):
-    
-    z = x - torch.max(x,dim=1,keepdim=True).values
-    numerator = torch.exp(z)
-    denominator = torch.sum(numerator, dim=1, keepdims=True)
-    # print("max",denominator.max().item(),"min",denominator.min().item())
-    softmax = numerator / denominator
-    return softmax
-  
-  def forward(self, input, hidden, encoder_outputs):
+
+  def forward(self, input):
           
     #input = [target_len,batch size]
     #hidden = [batch size, dec hid dim]
     #encoder_outputs = [src len, batch size, enc hid dim * 2]
     
-    embedded = self.embedding(input)
+    embedded = self.dropout(self.embedding(input))
     #embedded = [target_len, batch size, emb dim]
     
     output_target_decoder,hidden_target_decoder = self.rnn(embedded)
     #output_target_decoder = [target_len, batch size, hidden_dim]
     #hidden_target_decoder = [n layers , batch size, hidden_dim]
-    
-    trg_len = input.shape[0]
-    batch_size = input.shape[1]
-    trg_vocab_size = self.output_dim
-    # later to be passed in constructor (currently accessing through Globals)
-    sop_symbol = TRG.vocab.stoi['<sop>']
-    eop_symbol = TRG.vocab.stoi['<eop>']
-    
-    alpha = torch.zeros(batch_size,trg_len).to(self.device)
-    # alpha[:,0] = 1
-    for end in range(1,trg_len):
+    return output_target_decoder,hidden_target_decoder
+  
 
-      x_i = torch.zeros(batch_size,min(end,segment_threshold)).to(self.device)
-      index = 0
-      for phraseLen in range(min(end,segment_threshold),0,-1):
-        start = end - phraseLen + 1
-        weighted = self.attention(encoder_outputs, output_target_decoder[start-1])
-        
-        sop_vector = (torch.ones(1,batch_size,dtype=torch.int64)*sop_symbol).to(self.device)
-        input_phrase = input[start:end+1,:]
-        input_phrase = torch.cat((sop_vector,input_phrase),0)
-        eop_vector = (torch.ones(1,batch_size,dtype=torch.int64)*eop_symbol).to(self.device)
-        input_phrase = torch.cat((input_phrase,eop_vector),0)
-        
-        phraseEmbedded = self.embedding(input_phrase)
-        
-        # currEmbedded = phraseEmbedded[0,:,:]
-        # rnn_input = torch.cat((currEmbedded.unsqueeze(0), weighted), dim = 2)
-        
-        phraseProb = torch.zeros(batch_size).to(self.device)
-        for t in range(input_phrase.shape[0]-1):
-          rnn_input = phraseEmbedded[t].unsqueeze(0)
-          output, hidden = self.segmentRnn(rnn_input)
-          
-          output = output.squeeze(0)
-          # Hack to work for 1 sized batch, Todo
-          if weighted.ndim == 3:
-            weighted = weighted.squeeze(0)
-          rnn_input = rnn_input.squeeze(0)
-          
-          prediction = self.fc_out(torch.cat((output, weighted, rnn_input), dim = 1))
-          #prediction = [batch size, output dim]
-          # probabilities = self.soft(prediction)
-          # phraseProb *= torch.exp(probabilities[torch.arange(batch_size),input_phrase[t+1]])
-
-          probabilities = self.soft(prediction)
-          # test = gradcheck(self.soft, prediction, eps=1e-6, atol=1e-4)
-          # print(test)
-          phraseProb += probabilities[torch.arange(batch_size),input_phrase[t+1]]
-
-        temp_start = alpha[:,start-1].detach().clone()
-        x_i[:,index] = temp_start+phraseProb
-        index = index+1
-        '''
-        temp_end = alpha[:,end].detach().clone()
-        temp_start = alpha[:,start-1].detach().clone()
-        alpha[:,end] = temp_end + torch.exp(phraseProb)*temp_start
-        '''
-      alpha[:,end] = torch.logsumexp(x_i,dim=1)
-        
-        # print("alpha[",end,"] = alpha[",end,"] + phrase(",start,",",end,")*alpha[",start-1,"]")
-        # if torch.isnan(alpha).any():
-        #   print(alpha)
-        #   input()
-        #   alpha[alpha != alpha] = 0
+class Decoder(nn.Module):
+  def __init__(self, output_dim, embed_dim, hidden_dim,segment_dim,n_layers, dropout):
+    super().__init__()
+    self.output_dim = output_dim
+    self.n_layers = n_layers
+    self.hidden_dim = hidden_dim
+    self.embedding = nn.Embedding(self.output_dim, embed_dim)
+    self.segmentRnn = nn.GRU(hidden_dim,hidden_dim,n_layers,dropout=dropout)
+    self.fc_out = nn.Linear((hidden_dim * 2) + hidden_dim + embed_dim, self.output_dim)
+    self.soft = nn.LogSoftmax(dim=1)
+    self.dropout = nn.Dropout(dropout)
+  
+  def forward(self, input, weighted):
     
-    return alpha[:,-1]
+    embedded = self.dropout(self.embedding(input))
+    output, hidden = self.segmentRnn(embedded)
+    
+    output = output.squeeze(0)
+    weighted = weighted.squeeze(0)
+    embedded = embedded.squeeze(0)
+    
+    prediction = self.soft(self.fc_out(torch.cat((output, weighted, embedded), dim = 1)))
+    #prediction = [batch size, output dim]
+    # probabilities = self.soft(prediction)
+    # phraseProb *= torch.exp(probabilities[torch.arange(batch_size),input[t+1]])
+    
+    return prediction
+      
       
 class NP2MT(nn.Module):
-  def __init__(self, encoder, decoder, device):
+  def __init__(self, encoder, attention, targetEncoder, decoder, device):
     super().__init__()
     
     self.encoder = encoder
+    self.attention = attention
+    self.targetEncoder = targetEncoder
     self.decoder = decoder
     self.device = device
       
@@ -354,26 +305,109 @@ class NP2MT(nn.Module):
     trg_len = trg.shape[0]
     trg_vocab_size = self.decoder.output_dim
     
-    ''' moved this to Decoder now
-    # later to be passed in constructor (currently accessing through Globals)
-    sop_symbol = TRG.vocab.stoi['<sop>']
-    eop_symbol = TRG.vocab.stoi['<eop>']
-    
-    #tensor to store decoder outputs
-    outputs = torch.zeros(trg_len, batch_size, trg_vocab_size).to(self.device)
-    '''
-    
     #encoder_outputs is representation of all phrases states of the input sequence, back and forwards
     #hidden is the final forward and backward hidden states, passed through a linear layer (batch_size*hidden_dim)
     encoder_outputs, hidden = self.encoder(src)
-    output = self.decoder(trg, hidden, encoder_outputs)
-    return output
+    output_target_decoder,hidden_target_decoder = self.targetEncoder(trg)
+    sop_symbol = TRG.vocab.stoi['<sop>']
+    eop_symbol = TRG.vocab.stoi['<eop>']
+    
+    alpha = torch.zeros(batch_size,trg_len).to(self.device)
+    # alpha[:,0] = 1
+    for end in range(1,trg_len):
 
+      x_i = torch.zeros(batch_size,min(end,segment_threshold)).to(self.device)
+      index = 0
+      for phraseLen in range(min(end,segment_threshold),0,-1):
+        start = end - phraseLen + 1
+        weighted = self.attention(encoder_outputs, output_target_decoder[start-1])
+        
+        sop_vector = (torch.ones(1,batch_size,dtype=torch.int64)*sop_symbol).to(self.device)
+        input_phrase = trg[start:end+1,:]
+        input_phrase = torch.cat((sop_vector,input_phrase),0)
+        eop_vector = (torch.ones(1,batch_size,dtype=torch.int64)*eop_symbol).to(self.device)
+        input_phrase = torch.cat((input_phrase,eop_vector),0)
+        
+        phraseProb = torch.zeros(batch_size).to(self.device)
+        
+        for t in range(input_phrase.shape[0]-1):
+
+          probabilities = self.decoder(input_phrase[t].view(-1,batch_size), weighted)
+          phraseProb += probabilities[torch.arange(batch_size),input_phrase[t+1]]
+          
+        x_i[:,index] = alpha[:,start-1] + phraseProb
+        index = index+1
+        
+      alpha[:,end] = torch.logsumexp(x_i,dim=1)
+      
+    outFinal = alpha[:,-1]
+    del x_i
+    del alpha
+    del phraseProb
+    return outFinal
+  
+  def forward_predict(self, src, trg):
+    
+    #src = [src len, batch size]
+    #trg = [trg len, batch size]
+    #teacher_forcing_ratio is probability to use teacher forcing
+    #e.g. if teacher_forcing_ratio is 0.75 we use teacher forcing 75% of the time
+    
+    batch_size = src.shape[1]
+    trg_len = trg.shape[0]
+    trg_vocab_size = self.decoder.output_dim
+
+    sos_symbol = TRG.vocab.stoi['<sos>']    
+    sop_symbol = TRG.vocab.stoi['<sop>']
+    eop_symbol = TRG.vocab.stoi['<eop>']
+    eos_symbol = TRG.vocab.stoi['<eos>']    
+    #encoder_outputs is representation of all phrases states of the input sequence, back and forwards
+    #hidden is the final forward and backward hidden states, passed through a linear layer (batch_size*hidden_dim)
+    
+    for b in range(batch_size):
+      encoder_outputs, hidden = self.encoder(src[:,b].view(-1,1))
+      trg = torch.tensor([[sos_symbol]]).to(self.device)
+      output_target_decoder,hidden_target_decoder = self.targetEncoder(trg)
+      weighted = self.attention(encoder_outputs, output_target_decoder[-1])
+      
+      decoder_input = torch.tensor([[sop_symbol]]).to(self.device)
+      
+      num_segments = 0
+      decoded_words = []
+
+      while decoder_input != eos_symbol and len(decoded_words)<= MAX_LENGTH:
+        new_segment = False
+        for j in range(segment_threshold):
+          probabilities = self.decoder(decoder_input.view(-1,1), weighted)
+          prob, decoder_output = torch.max(probabilities,1)
+          if decoder_output == eop_symbol or decoder_output == eos_symbol:
+            decoder_input = decoder_output
+            break
+          else:
+            if not new_segment:
+              num_segments = num_segments + 1
+              new_segment = True
+          
+          decoder_input = decoder_output
+          decoded_words.append(decoder_output)
+        
+        if decoder_input == eos_symbol:
+          break
+        decoder_input = torch.tensor([[sop_symbol]]).to(self.device)
+        trg = torch.tensor(decoded_words).view(-1,1).to(self.device)
+        output_target_decoder,hidden_target_decoder = self.targetEncoder(trg)
+        weighted = self.attention(encoder_outputs, output_target_decoder[-1])
+      
+      for i in decoded_words:
+        print(TRG.vocab.itos[i],sep=' ')
+
+  
 attn = Attention(hidden_dim, hidden_dim)
 enc = Encoder(input_dim, embed_dim, hidden_dim, segment_dim, n_layers, dropout, segment_threshold, device)
-dec = Decoder(output_dim, embed_dim, hidden_dim, segment_dim, n_layers, dropout, attn)
+targetEnc = TargetEncoder(output_dim, embed_dim, hidden_dim, segment_dim, n_layers, dropout)
+dec = Decoder(output_dim, embed_dim, hidden_dim, segment_dim, n_layers, dropout)
 
-model = NP2MT(enc, dec, device).to(device)
+model = NP2MT(enc, attn, targetEnc, dec, device).to(device)
 
 def init_weights(m):
   for name, param in m.named_parameters():
@@ -381,7 +415,14 @@ def init_weights(m):
       nn.init.normal_(param.data, mean=0, std=0.01)
     else:
       nn.init.constant_(param.data, 0)
-            
+
+def repackage_hidden(h):
+    """Wraps hidden states in new Tensors, to detach them from their history."""
+    if isinstance(h, torch.Tensor):
+        return h.detach()
+    else:
+        return tuple(repackage_hidden(v) for v in h)
+      
 model.apply(init_weights)
 
 def count_parameters(model):
@@ -403,47 +444,12 @@ def train(model, iterator, optimizer, criterion, clip):
     optimizer.zero_grad()
     output = model(src, trg)
     
-    # print("range is")
-    # print(output.max().item(),output.min().item())
-  
-    # print((output==0).any())
     loss = -output.mean()
     print("loss is",loss)
     loss.backward()
-  
-    '''
-    print("Before optimization step\n\n")
-
-    for param in model.parameters():
-      # if param.requires_grad:
-      # print(name)
-      print("param.data",torch.isfinite(param.data).all())
-      print("param.grad.data",torch.isfinite(param.grad.data).all(),"\n")
-    '''
     epoch_loss += loss.item()
-    # try:
-    #   loss.backward()
-    # except:
-    #   print("Before optimization step\n\n")
-    #   for name, param in model.named_parameters():
-    #     if param.requires_grad:
-    #       if param.grad is None:
-    #         print(name)
-    #       print(name, torch.isnan(param.grad.data).any())
-    #   exit()
-    
     torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
-    
     optimizer.step()
-    '''
-    print("After optimization step\n\n")
-
-    for param in model.parameters():
-      # if param.requires_grad:
-      # print(name)
-      print("param.data",torch.isfinite(param.data).all())
-      print("param.grad.data",torch.isfinite(param.grad.data).all(),"\n")
-    '''
     epoch_loss += loss.item()
     
   return epoch_loss / len(iterator)
@@ -457,12 +463,12 @@ def evaluate(model, iterator, criterion):
     for i, batch in enumerate(iterator):
         src = batch.src
         trg = batch.trg
-        output = model(src, trg, 0) #turn off teacher forcing
-        loss = -output.mean()
-
-        epoch_loss += loss.item()
+        model.forward_predict(src, trg) #turn off teacher forcing
+        # loss = -output.mean()
+        print("ok")
+        # epoch_loss += loss.item()
       
-  return epoch_loss / len(iterator)
+  # return epoch_loss / len(iterator)
 
 def epoch_time(start_time, end_time):
   elapsed_time = end_time - start_time
@@ -470,7 +476,7 @@ def epoch_time(start_time, end_time):
   elapsed_secs = int(elapsed_time - (elapsed_mins * 60))
   return elapsed_mins, elapsed_secs
 
-N_EPOCHS = 10
+N_EPOCHS = 2
 CLIP = 1
 
 best_valid_loss = float('inf')
