@@ -1,0 +1,459 @@
+The discipline of thermodynamics arose from the need to understand and improve the working of heat engines.  
+"The steam engine, as we know, is inseparable from the Industrial Revolution in England in the eighteenth century, which had great impact on the course of human civilisation.  "
+Sometimes technology gives rise to new physics; at other times physics generates new technology.  
+An example of the latter is the wireless communication technology that followed the discovery of the basic laws of electricity and magnetism in the nineteenth century.  
+The applications of physics are not always easy to foresee.  
+"As late as 1933, the great physicist Ernest Rutherford had dismissed the possibility of tapping energy from atoms.  "
+"But only a few years later, in 1938, Hahn and Meitner discovered the phenomenon of neutron-induced fission of uranium, which would serve as the basis of nuclear power reactors and nuclear weapons.  "
+Yet another important example of physics giving rise to technology is the silicon 'chip' that triggered the computer revolution in the last three decades of the twentieth century.  
+A most significant area to which physics has and will contribute is the development of alternative energy resources.  
+The fossil fuels of the planet are dwindling fast and there is an urgent need to discover new and affordable sources of energy.  
+"While dealing with atoms and molecules, the kilogram is an inconvenient unit.  "
+Mass of commonly available objects can be determined by a common balance like the one used in a grocery shop.  
+"Large masses in the universe like planets, stars, etc., based on Newton's law of gravitation can be measured by using gravitational method  -LRB- See Chapter 8 -RRB- .  "
+"The masses of the objects, we come across in the universe, vary over a very wide range.  "
+Table 2.4 gives the range and order of the typical masses of various objects.  
+To measure any time interval we need a clock.  
+"We now use an atomic standard of time, which is based on the periodic vibrations produced in a cesium atom.  "
+"This is the basis of the cesium clock, sometimes called atomic clock, used in the national standards.  "
+The rules for rounding off numbers to the appropriate significant figures are obvious in most cases.  
+"A number 2.746 rounded off to three significant figures is 2.75, while the number 2.743 would be 2.74.  "
+But what if the number is 2.745 in which the insignificant digit is 5.  
+"Here, the convention is that if the preceding digit is even, the insignificant digit is simply dropped and, if it is odd, the preceding digit is raised by 1.  "
+"Then, the number 2.745 rounded off to three significant figures becomes 2.74.  "
+"On the other hand, the number 2.735 rounded off to three significant figures becomes 2.74 since the preceding digit is odd.  "
+"In any involved or complex multi-step calculation, you should retain, in intermediate steps, one digit more than the significant digits and round off to proper significant figures at the end of the calculation.  "
+The value of π = 3.1415926... is known to a large number of significant figures.  
+"You may take the value as 3.142 or 3.14 for π, with limited number of significant figures as required in specific cases.  "
+"In this case, Thus, in this case the average speed is not equal to the magnitude of the average velocity.  "
+This happens because the motion here involves change in direction so that the path length is greater than the magnitude of displacement.  
+"This shows that speed is, in general, greater than the magnitude of the velocity.  "
+"If the car in Example 3.1 moves from O to P and comes back to O in the same time interval, average speed is 20 m/s but the average velocity is zero!  "
+"For this, we define instantaneous velocity or simply velocity v at an instant t.   "
+"It is the rate of change of position with respect to time, at that instant.  "
+We can use Eq.  -LRB- 3.3a -RRB-  for obtaining the value of velocity at an instant either graphically or numerically.  
+Suppose that we want to obtain graphically the value of velocity at time t = 4 s  -LRB- point P -RRB-  for the motion of the car represented in Fig. 3.3.  
+The figure has been redrawn in Fig. 3.6 choosing different scales to facilitate the calculation.  
+"To describe the position of an object moving in a plane, we need to choose a convenient point, say O as origin.  "
+"Let P and P′ be the positions of the object at time t and t′,respectively  -LRB- Fig. 4.1(a -RRB- ).  "
+We join O and P by a straight line.  
+"Then, OP is the position vector of the object at time t.  "
+An arrow is marked at the head of this line.  
+"It is represented by a symbol r, i.e. OP=r.  "
+"Point P′ is represented by another position vector, OP′ denoted by r′.  "
+The length of the vector r represents the magnitude of the vector and its direction is the direction in which P lies as seen from O.  
+"He needs to provide a much greater force to stop the ball instantly, and this hurts.  "
+"The conclusion is clear: force not only depends on the change in momentum, but also on how fast the change is brought about.  "
+The same change in momentum brought about in a shorter time needs a greater applied force.  
+"In short, the greater the rate of change of momentum, the greater is the force.  "
+Observations confirm that the product of mass and velocity  -LRB- i.e. momentum -RRB-  is basic to the effect of force on motion.  
+"However, at the end of the time interval, observations show that each body acquires the same momentum.  "
+Thus the same force for the same time causes the same change in momentum for different bodies.  
+This is a crucial clue to the second law of motion.  
+"In the preceding observations, the vector character of momentum has not been evident.  "
+The net effect is that the component of the contact force parallel to the surface opposes motion.  
+We often regard friction as something undesirable.  
+"In many situations, like in a machine with different moving parts, friction does have a negative role.  "
+"It opposes relative motion and thereby dissipates power in the form of heat, etc.  "
+Lubricants are a way of reducing kinetic friction in a machine.  
+Another way is to use ball bearings between two moving parts of a machine.  
+"In many practical situations, however, friction is critically needed.  "
+Kinetic friction that dissipates power is nevertheless important for quickly stopping relative motion.  
+It is made use of by brakes in machines and automobiles.  
+"Similarly, static friction is important in daily life.  "
+For simplicity we demonstrate this important principle for one-dimensional motion.  
+Suppose that a body undergoes displacement Δx under the action of a conservative force F.  
+"which means that K + V, the sum of the kinetic and potential energies of the body is a constant.  "
+"The quantity K + V -LRB- x -RRB- , is called the total mechanical energy of the system.  "
+"Individually the kinetic energy K and the potential energy V -LRB- x -RRB-  may vary from point to point, but the sum is a constant.  "
+The aptness of the term ' conservative force ' is now clear.  
+Let us consider some of the definitions of a conservative force.  
+A force F -LRB- x -RRB-  is conservative if it can be derived from a scalar quantity V(x) by the relation given by Eq. (6.9).  
+"The three-dimensional generalisation requires the use of a vector derivative, which is outside the scope of this book.  "
+A third definition states that the work done by this force in a closed path is zero.  
+Such an event is called scattering.  
+"The velocities and directions in which the two particles go away depend on their initial velocities as well as the type of interaction between them, their masses, shapes and sizes.  "
+"In the earlier chapters we primarily considered the motion of a single particle  -LRB- A particle is represented as a point mass,It has practically no size -RRB- .  "
+Any real body which we encounter in daily life has a finite size.  
+In dealing with the motion of extended bodies  -LRB- bodies of finite size -RRB-  often the idealised model of a particle is inadequate.  
+In this chapter we shall try to go beyond this inadequacy ; We shall attempt to build an understanding of the motion of extended bodies.  
+"An extended body, in the first place, is a system of particles.  "
+We shall begin with the consideration of motion of the system as a whole.  
+The center of mass of a system of particles will be a key concept here.  
+"Because of Eq.  -LRB- 7.15 -RRB- , this also means that when the total external force on the system is zero the velocity of the center of mass remains constant.  "
+We assume throughout the discussion on systems of particles in this chapter that the total mass of the system remains constant.  
+"Note that on account of the internal forces, i.e. the forces exerted by the particles on one another, the individual particles may have complicated trajectories.  "
+"Yet, if the total external force acting on the system is zero, the center of mass moves with a constant velocity, i.e., moves uniformly in a straight line like a free particle.  "
+"As an example, let us consider the radioactive decay of a moving unstable particle, like the nucleus of radium.  "
+A radium nucleus disintegrates into a nucleus of radon and an alpha particle.  
+The forces leading to the decay are internal to the system and the external forces on the system are negligible.  
+So the total linear momentum of the system is the same before and after decay.  
+We now wish to study the angular momentum in the special case of rotation about a fixed axis.  
+We first consider the angular momentum of a typical particle of the rotating rigid body.  
+We then sum up the contributions of individual particles to get L of the whole body.  
+For a typical particle l = r × p.  
+"Further, v is tangential at P to the circle which the particle describes.  "
+Using the right-hand rule one can check that CP × v is parallel to the fixed axis.  
+"Similarly, we can check that OC × v is perpendicular to the fixed axis.  "
+"In general, for a particle, the angular momentum l is not along the axis of rotation, i.e. for a particle, l and ω are not necessarily parallel.  "
+Compare this with the corresponding fact in translation.  
+"For a particle, p and v are always parallel to each other.  "
+The law of areas can be understood as a consequence of conservation of angular momentum whch is valid for any central force.  
+A central force is such that the force on the planet is along the vector joining the sun and the planet.  
+Let the sun be at the origin and let the position and momentum of the planet be denoted by r and p respectively.  
+"where v is the velocity, L is the angular momentum equal to  -LRB- r × p -RRB- .  "
+"For a central force, which is directed along r, L is a constant as the planet goes around.  "
+"Hence, ΔA/Δt constant according to the last equation.  "
+This is the law of areas.  
+Gravitation is a central force and hence the law of areas follows.  
+The area SBAC bounded by the ellipse and the radius vectors SB and SC is larger than SBPC in  -LRB- Fig. 8.1a -RRB- .  
+"From Kepler's second law, equal areas are swept in equal times.  "
+"Our skin, however, remains intact when a blunt object with a wider contact area  -LRB- say the back of a spoon -RRB-  is pressed against it with the same force.  "
+"If an elephant were to step on a man's chest, his ribs would crack.  "
+"A circus performer across whose chest a large, light but strong wooden plank is placed first, is saved from this accident.  "
+"Smaller the area on which the force acts, greater is the impact.  "
+This concept is known as pressure.  
+"When an object is submerged in a fluid at rest, the fluid exerts a force on its surface.  "
+This force is always normal to the object's surface.  
+"This is so because if there were a component of force parallel to the surface, the object will also exert a force on the fluid parallel to it; as a consequence of Newton's third law.  "
+This force will cause the fluid to flow parallel to the surface.  
+"Since the fluid is at rest, this can not happen.  "
+This force exists when there is relative motion between layers of the liquid.  
+"If oil is replaced by honey, a greater force is required to move the plate with the same velocity.  "
+Hence we say that honey is more viscous than oil.  
+The fluid in contact with a surface has the same velocity as that of the surfaces.  
+"Hence, the layer of the liquid in contact with top surface moves with a velocity v and the layer of the liquid in contact with the fixed surface is stationary.  "
+The velocities of layers increase uniformly from bottom  -LRB- zero velocity -RRB-  to the top layer (velocity v).  
+This is known as Stokes ' law.  
+We shall not derive Stokes ' law.  
+This law is an interesting example of retarding force which is proportional to velocity.  
+"You will also learn what happens when water boils or freezes, and its temperature does not change during these processes even though a great deal of heat is flowing into or out of it.  "
+We can begin studying thermal properties of matter with definitions of temperature and heat.  
+"Temperature is a relative measure, or indication of hotness or coldness.  "
+"A hot utensil is said to have a high temperature, and ice cube to have a low temperature.  "
+An object that has a higher temperature than another object is said to be hotter.  
+"Note that hot and cold are relative terms, like tall and short.  "
+We can perceive temperature by touch.  
+"However, this temperature sense is somewhat unreliable and its range is too limited to be useful for scientific purposes.  "
+Natural convection is responsible for many familiar phenomena.  
+"During the day, the ground heats up more quickly than large bodies of water do.  "
+This occurs both because the water has a greater specific heat and because mixing currents disperse the absorbed heat throughout the great volume of water.  
+"The air in contact with the warm ground is heated by conduction ; It expands, becoming less dense than the surrounding cooler air.  "
+"As a result, the warm air rises  -LRB- air currents -RRB-  and other air moves (winds) to fill the space-creating a sea breeze near a large body of water.  "
+"Cooler air descends, and a thermal convection cycle is set up, which transfers heat away from the land.  "
+"At night, the ground loses its heat more quickly, and the water surface is warmer than the land.  "
+"As a result, the cycle is reveresed  -LRB- Fig. 11.17 -RRB- .  "
+"The other example of natural convection is the steady surface wind on the earth blowing in from north-east towards the equator, the so called trade wind.  "
+A resonable explanation is as follows: the equatorial and polar regions of the earth receive unequal solar heat.  
+"In a quasi-static process, at every stage, the difference in the pressure of the system and the external pressure is infinitesimally small.  "
+The same is true of the temperature difference between the system and its surroundings.  
+"Similarly, to change the temperature, we introduce an infinitesimal temperature difference between the system and the surrounding reservoirs and by choosing reservoirs of progressively different temperatures T to T ′, the system achieves the temperature T ′.  "
+A quasi-static process is obviously a hypothetical construct.  
+"In practice, processes that are sufficiently slow and do not involve accelerated motion of the piston, large temperature gradient, etc. are reasonably approximation to an ideal quasi-static process.  "
+"We shall from now on deal with quasi-static processes only, except when stated otherwise.  "
+A process in which the temperature of the system is kept fixed throughout is called an isothermal process.  
+The expansion of a gas in a metallic cylinder placed in a large reservoir of fixed temperature is an example of an isothermal process.  
+"Heat transferred from the reservoir to the system does not materially affect the temperature of the reservoir, because of its very large heat capacity.  "
+In isobaric processes the pressure is constant while in isochoric processes the volume is constant.  
+We next consider some examples which give us information about the volume occupied by the molecules and the volume of a single molecule.  
+"For a given mass of water molecules, the density is less if volume is large.  "
+So the volume of the vapor is 1000/0.6 = / -LRB- 6 × 10-4 -RRB-  times larger.  
+"If densities of bulk water and water molecules are same, then the fraction of molecular volume to the total volume in liquid state is 1.  "
+"As volume in vapor state has increased, the fractional volume is less by the same amount, i.e. 6×10-4.  "
+"In the liquid  -LRB- or solid -RRB-  phase, the molecules of water are quite closely packed.  "
+"The density of water molecule may therefore, be regarded as roughly equal to the density of bulk water = 1000 kgm—3.  "
+"To estimate the volume of a water molecule, we need to know the mass of a single water molecule.  "
+When the body is at this position no net external force acts on it.  
+"Therefore, if it is left there at rest, it remains there forever.  "
+"For example, a ball placed in a bowl will be in equilibrium at the bottom.  "
+"If displaced a little from the point, it will perform oscillations in the bowl.  "
+"Every oscillatory motion is periodic, but every periodic motion need not be oscillatory.  "
+"Circular motion is a periodic motion, but it is not oscillatory.  "
+There is no significant difference between oscillations and vibrations.  
+Simple harmonic motion is the simplest form of oscillatory motion.  
+The vane is submerged in a liquid.  
+"As the block oscillates up and down, the vane also moves along with it in the liquid.  "
+"The up and down motion of the vane displaces the liquid, which in turn, exerts an inhibiting drag force  -LRB- viscous drag -RRB-  on it and thus on the entire oscillating system.  "
+"With time, the mechanical energy of the block-spring system decreases, as energy is transferred to the thermal energy of the liquid and vane.  "
+Let the damping force exerted by the liquid on the system be Fd.  
+Its magnitude is proportional to the velocity v of the vane or the block.  
+This assumption is valid only when the vane moves slowly.  
+The negative sign makes it clear that the force is opposite to the velocity at every moment.  
+"When the mass m is attached to the spring and released, the spring will elongate a little and the mass will settle at some height.  "
+"For a sinusoidal wave, as shown in Fig. 15.3, this function should be periodic in space as well as in time.  "
+"Let y -LRB- x,t -RRB-  denote the transverse displacement of the element at position x at time t.  "
+"As the wave sweeps through succeeding elements of the string, the elements oscillate parallel to the y-axis.  "
+It represents a transverse wave moving along the x-axis.  
+"At any time t, it gives the displacement of the elements of the string as a function of their position.  "
+It can tell us the shape of the wave at any given time and show how the wave progresses.  
+"Functions, such as that given in Eq. -LRB- 15.2 -RRB- , represent a progressive wave traveling along the positive direction of the x-axis.  "
+"To understand the definition of the quantities in Eq. -LRB- 15.2 -RRB- , let us consider the graphs shown in Fig. 15.6.  "
+These graphs represent plots of Eq. -LRB- 15.2 -RRB-  for five different values of time t as the wave travels in positive direction of x-axis.  
+"In such a system suppose that we send a continuous sinusoidal wave of a certain frequency, say, toward the right.  "
+"When the wave reaches the right end, it gets reflected and begins to travel back.  "
+"The left-going wave then overlaps the wave, traveling to the right.  "
+"This process will continue and, therefore, very soon we have many overlapping waves, which interfere with one another.  "
+"In such a system, at any point x and at any time t, there are always two waves, one moving to the left and another to the right.  "
+"The wave represented by Eq. -LRB- 15.37 -RRB-  does not describe a traveling wave, as the waveform or the disturbance does not move to either side.  "
+"Equation  -LRB- 15.37 -RRB- , therefore, represents a standing wave, a wave in which the waveform does not move.  "
+The formation of such waves is illustrated in Fig. 15.12.  
+The science of electricity and magnetism is the foundation for the modern technological civilisation.  
+"Electric power, telecommunication, radio and television, and a wide variety of the practical appliances used in daily life are based on the principles of this science.  "
+"Although charged particles in motion exert both electric and magnetic forces, in the frame of reference where all the charges are at rest, the forces are purely electrical.  "
+You know that gravitational force is a long-range force.  
+Its effect is felt even when the distance between the interacting particles is very large because the force decreases inversely as the square of the distance between the interacting bodies.  
+A simple apparatus to detect charge on a body is the gold-leaf electroscope  -LRB- Fig. 1.2 (a -RRB- ).  
+"It consists of a vertical metal rod housed in a box, with two thin gold leaves attached to its bottom end.  "
+"When a charged object touches the metal knob at the top of the rod, charge flows on to the leaves and they diverge.  "
+The degree of divergance is an indicator of the amount of charge.  
+E is a vector quantity that varies from one point to another point in space and is determined from the positions of the source charges.  
+You may wonder why the notion of electric field has been introduced here at all.  
+"After all, for any system of charges, the measurable quantity is the force on a charge which can be directly determined using Coulomb's law and the superposition principle  -LRB- Eq. (1.5 -RRB- ).  "
+Why then introduce this intermediate quantity called the electric field?  
+"For electrostatics, the concept of electric field is convenient, but not really necessary.  "
+Electric field is an elegant way of characterising the electrical environment of a system of charges.  
+Electric field is a characteristic of the system of charges and is independent of the test charge that you place at a point to determine the field.  
+The term field in physics generally refers to a quantity that is defined at every point in space and may vary from point to point.  
+"Electric field is a vector field, since force is a vector quantity.  "
+We now come to the definition of electric flux.  
+The angle θ here is the angle between E and ΔS.  
+"For a closed surface, with the convention stated already, θ is the angle between E and the outward normal to the area element.  "
+The unit of electric flux is N C m.  
+"The basic definition of electric flux given by Eq.  -LRB- 1.11 -RRB-  can be used, in principle, to calculate the total flux through any given surface.  "
+"All we have to do is to divide the surface into small area elements, calculate the flux at each element and add them up.  "
+"Thus, the total flux φ through a surface S is φ ~ Σ E. ΔS  -LRB- 1.12 -RRB-  The approximation sign is put because the electric field E is taken to be constant over the small area element.  "
+"This, however, is exactly the field produced by a charge q placed at the center O.  "
+"Thus for points outside the shell, the field due to a uniformly charged shell is as if the entire charge of the shell is concentrated at its center.  "
+" -LRB- ii -RRB-  Field inside the shell: In Fig. 1.31 (b), the point P is inside the shell.  "
+The Gaussian surface is again a sphere through P centred at O.  
+"The flux through the Gaussian surface, calculated as before, is E × 4 π r.  "
+"However, in this case, the Gaussian surface encloses no charge.  "
+"Gauss's law then gives that is, the field due to a uniformly charged thin shell is zero at all points inside the shell.  "
+This important result is a direct consequence of Gauss's law which follows from Coulomb's law.  
+The experimental verification of this result confirms the 1 / r dependence in Coulomb's law.  
+"In Physics, we often encounter systems with various symmetries.  "
+"Now, the potential difference between positions r1 and r2 equals the work done in bringing a unit positive charge against field from r2 to r1.  "
+The displacement parallel to the force is 2a cos θ.  
+We note that U′  -LRB- θ -RRB-  differs from U(θ) by a quantity which is just a constant for a given dipole.  
+"Since a constant is insignificant for potential energy, we can drop the second term in Eq.  -LRB- 2.34 -RRB-  and it then reduces to Eq. (2.32).  "
+We can now understand why we took θ0=π/2.  
+Conductors and insulators were described briefly in Chapter 1.  
+Conductors contain mobile charge carriers.  
+"In metallic conductors, these charge carriers are electrons.  "
+"In a metal, the outer  -LRB- valence -RRB-  electrons part away from their atoms and are free to move.  "
+"The left plate of C1 and the right plate of C2 are connected to two terminals of a battery and have charges Q and —Q, respectively.  "
+It then follows that the right plate of C1 has charge —Q and the left plate of C2 has charge Q.  
+"If this was not so, the net charge on each capacitor would not be zero.  "
+"Thus, in the series combination, charges on the two plates  -LRB- ±Q -RRB-  are the same on each capacitor.  "
+Now we can regard the combination as an effective capacitor with charge Q and potential difference V.  
+"In this case, the same potential difference is applied across both the capacitors.  "
+But the plate charges  -LRB- ±Q1 -RRB-  on capacitor 1 and the plate charges (±Q2) on the capacitor 2 are not necessarily the same.  
+"A capacitor, as we have seen above, is a system of two conductors with charge Q and —Q.  "
+"To determine the energy stored in this configuration, consider initially two uncharged conductors 1 and 2.  "
+The first two bands from the end indicate the first two significant figures of the resistance in ohms.  
+The third band indicates the decimal multiplier  -LRB- as listed in Table 3.2 -RRB-  ; The last band stands for tolerance or possible variation in percentage about the indicated values.  
+"Sometimes, this last band is absent and that indicates a tolerance of 20%. "
+"For example, if the four colors are orange, blue, yellow and gold, the resistance value is 36×104Ω, with a tolerence value of 5%.  "
+The resistivity of a material is found to be dependent on the temperature.  
+Different materials do not exhibit the same dependence on temperatures.  
+"α is called the temperature co-efficient of resistivity, and from Eq.  -LRB- 3.26 -RRB- , the dimension of α is (Temperature) — 1.  "
+"For metals, α is positive and values of α for some metals at T0 = 0°C are listed in Table 3.1.  "
+The relation of Eq.  -LRB- 3.26 -RRB-  implies that a graph of ρT plotted against T would be a straight line.  
+"The orientation of the needles is shown when  -LRB- a -RRB-  the current emerges out of the plane of the paper, (b) the current moves into the plane of the paper.  "
+ -LRB- c -RRB-  The arrangement of iron filings around the wire.  
+The darkened ends of the needle represent north poles.  
+The effect of the earth's magnetic field is neglected.  
+"A dot appears like the tip of an arrow pointed at you, a cross is like the feathered tail of an arrow moving away from you.  "
+"As pointed out in the Chapter 1, the field E is not just an artefact but has a physical role.  "
+It can convey energy and momentum and is not established instantaneously but takes finite time to propagate.  
+The concept of a field was specially stressed by Faraday and was incorporated by Maxwell in his unification of electricity and magnetism.  
+"In addition to depending on each point in space, it can also vary with time, i.e., be a function of time.  "
+"In our discussions in this chapter, we will assume that the fields do not change with time.  "
+"Here, we shall study the relation between current and the magnetic field it produces.  "
+It is given by the Biot-Savart's law.  
+Figure 4.9 shows a finite conductor XY carrying current I.  
+Consider an infinitesimal element dl of the conductor.  
+The magnetic field dB due to this element is to be determined at a point P which is at a distance r from it.  
+Let θ be the angle between dl and the displacement vector r.  
+"According to Biot-Savart's law, the magnitude of the magnetic field dB is proportional to the current I, the element length -PIPE-dl-PIPE-, and inversely proportional to the square of the distance r.  "
+Its direction is perpendicular to the plane containing dl and r.  
+The above expression holds when the medium is vacuum.  
+Equation  -LRB- 4.11(a -RRB- ) constitutes our basic equation for the magnetic field.  
+"In the beginning, you may require some small adjustments to get a good effect.  "
+Keep your face away from mercury vapors as they are poisonous.  
+Do not inhale mercury vapors for long.  
+We now show that a rectangular loop carrying a steady current I and placed in a uniform magnetic field experiences a torque.  
+It does not experience a net force.  
+This behavior is analogous to that of electric dipole in a uniform electric field.  
+We first consider the simple case when the rectangular loop is placed such that the uniform magnetic field B is in the plane of the loop.  
+This is illustrated in Fig. 4.21 -LRB- a -RRB- .  
+The field exerts no force on the two arms AD and BC of the loop.  
+It is perpendicular to the arm AB of the loop and exerts a force F1 on it which is directed into the plane of the loop.  
+We begin our study by examining iron filings sprinkled on a sheet of glass placed over a short bar magnet.  
+The arrangement of iron filings is shown in Fig. 5.2.  
+The pattern of iron filings suggests that the magnet has two poles similar to the positive and negative charge of an electric dipole.  
+"As mentioned in the introductory section, one pole is designated the North pole and the other, the South pole.  "
+"When suspended freely, these poles point approximately towards the geographic north and south poles, respectively.  "
+A similar pattern of iron filings is observed around a current carrying solenoid.  
+The pattern of iron filings permits us to plot the magnetic field lines.  
+This is shown both for the bar-magnet and the current-carrying solenoid in Fig. 5.3.  
+"For comparison refer to the Chapter 1, Figure 1.17 -LRB- d -RRB- .  "
+Electric field lines of an electric dipole are also displayed in Fig. 5.3 -LRB- c -RRB- .  
+"Given one, the other two may be easily determined.  "
+"The discussion in the previous section helps us to classify materials as diamagnetic, paramagnetic or ferromagnetic.  "
+"In terms of the susceptibility χ, a material is diamagnetic if χ is negative, para - if χ is positive and small, and ferro - if χ is large and positive.  "
+A glance at Table 5.3 gives one a better feeling for these materials.  
+Here ε is a small positive number introduced to quantify paramagnetic materials.  
+"Next, we describe these materials in some detail.  "
+Diamagnetic substances are those which have tendency to move from stronger to the weaker part of the external magnetic field.  
+"In other words, unlike the way a magnet attracts metals like iron, it would repel a diamagnetic substance.  "
+The field lines are repelled or expelled and the field inside the material is reduced.  
+"In most cases, as is evident from Table 5.2, this reduction is slight, being one part in 105.  "
+"Therefore, there is no change in the magnetic flux through coil C1 and the current in coil C1 drops to zero.  "
+"When the key is released, the current in C2 and the resulting magnetic field decreases from the maximum value to zero in a short time.  "
+This results in a decrease in magnetic flux through coil C1 and hence again induces an electric current in coil C1.  
+The common point in all these observations is that the time rate of change of magnetic flux through a circuit induces emf in it.  
+Faraday stated experimental observations in the form of a law called Faraday's law of electromagnetic induction.  
+Note that sensitive electrical instruments in the vicinity of an electromagnet can be damaged due to the induced emfs  -LRB- and the resulting currents -RRB-  when the electromagnet is turned on or off.  
+The magnitude of the induced emf in a circuit is equal to the time rate of change of magnetic flux through the circuit.  
+The negative sign indicates the direction of ε and hence the direction of current in a closed loop.  
+This will be discussed in detail in the next section.  
+"In the case of a closely wound coil of N turns, change of flux associated with each turn, is the same.  "
+An ac generator converts mechanical energy into electrical energy.  
+The basic elements of an ac generator are shown in Fig. 6.16.  
+It consists of a coil mounted on a rotor shaft.  
+The axis of rotation of the coil is perpendicular to the direction of the magnetic field.  
+The coil  -LRB- called armature -RRB-  is mechanically rotated in the uniform magnetic field by some external means.  
+"The rotation of the coil causes the magnetic flux through it to change, so an emf is induced in the coil.  "
+The ends of the coil are connected to an external circuit by means of slip rings and brushes.  
+"As a result, the effective area of the coil exposed to the magnetic field lines changes with time, and from Eq.  -LRB- 6.1 -RRB- , the flux at any time t is ΦB = BAcos θ = BAcos ωt.  "
+"From Faraday's law, the induced emf for the rotating coil of N turns is then, Φ.  "
+"Since im = vm/R at resonance, the current amplitude for case  -LRB- i -RRB-  is twice to that for case (ii).  "
+"Resonant circuits have a variety of applications, for example, in the tuning mechanism of a radio or a TV set.  "
+The antenna of a radio accepts signals from many broadcasting stations.  
+"The signals picked up in the antenna acts as a source in the tuning circuit of the radio, so the circuit can be driven at many frequencies.  "
+"But to hear one particular radio station, we tune the radio.  "
+"In tuning, we vary the capacitance of a capacitor in the tuning circuit such that the resonant frequency of the circuit becomes nearly equal to the frequency of the radio signal received.  "
+"When this happens, the amplitude of the current with the frequency of the signal of the particular radio station in the circuit is maximum.  "
+It is important to note that resonance phenomenon is exhibited by a circuit only if both L and C are present in the circuit.  
+This means that we can not have resonance in a RL or RC circuit.  
+"They are self-sustaining oscillations of electric and magnetic fields in free space, or vacuum. "
+"They differ from all the other waves we have studied so far, in respect that no material medium is involved in the vibrations of the electric and magnetic fields. "
+Sound waves in air are longitudinal waves of compression and rarefaction. 
+"Transverse elastic  -LRB- sound -RRB-  waves can also propagate in a solid, which is rigid and that resists shear. "
+They called this medium ether. 
+We now accept that no such physical medium is needed. 
+The famous experiment of Michelson and Morley in 1887 demolished conclusively the hypothesis of ether. 
+Infrared lamps are used in physical therapy. 
+Infrared radiation also plays an important role in maintaining the earth's warmth or average temperature through the greenhouse effect. 
+Incoming visible light  -LRB- which passes relatively easily through the atmosphere -RRB-  is absorbed by the earth's surface and re-radiated as infrared (longer wavelength) radiations. 
+This radiation is trapped by greenhouse gases such as carbon dioxide and water vapor. 
+"Infrared detectors are used in Earth satellites, both for military purposes and to observe growth of crops. "
+It is the most familiar form of electromagnetic waves. 
+It is the part of the spectrum that is detected by the human eye. 
+It runs from about 4×1014 Hz to about 7×1014 Hz or a wavelength range of about 700—400 nm. 
+Visible light emitted or reflected from objects around us provides us information about the world. 
+"Since light undergoes total internal reflection at each stage, there is no appreciable loss in the intensity of the light signal.  "
+Optical fibers are fabricated such that light reflected at one side of inner surface strikes the other at an angle larger than the critical angle.  
+"Even if the fiber is bent, light can easily travel along its length.  "
+"Thus, an optical fiber can be used to act as an optical pipe.  "
+A bundle of optical fibers can be put to several uses.  
+Optical fibers are extensively used for transmitting and receiving electrical signals which are converted to light by suitable transducers.  
+"Obviously, optical fibers can also be used for transmission of optical signals.  "
+"For example, these are used as a ' light pipe ' to facilitate visual examination of internal organs like esophagus, stomach and intestines.  "
+The other end of the fibers is fixed over an electric lamp.  
+"When the lamp is switched on, the light travels from the bottom of each fiber and appears at the tip of its free end as a dot of light.  "
+A schematic diagram of a compound microscope is shown in Fig. 9.31.  
+"The lens nearest the object, called the objective, forms a real, inverted, magnified image of the object.  "
+"Clearly, the final image is inverted with respect to the original object.  "
+We now obtain the magnification due to a compound microscope.  
+The first image is formed near the focal point of the eyepiece.  
+"The distance L, i.e., the distance between the second focal point of the objective and the first focal point of the eyepiece  -LRB- focal length f e  -RRB-  is called the tube length of the compound microscope.  "
+"In practice, it is difficult to make the focal length much smaller than 1 cm.  "
+Also large lenses are required to make L large.  
+"If we had slits instead of the point sources  -LRB- Fig. 10.14 -RRB- , each pair of points would have produced straight line fringes resulting in straight line fringes with increased intensities.  "
+"If we look clearly at the shadow cast by an opaque object, close to the region of geometrical shadow, there are alternate dark and bright regions just like in interference.  "
+This happens due to the phenomenon of diffraction.  
+"Diffraction is a general characteristic exhibited by all types of waves, be it sound waves, light waves, water waves or matter waves.  "
+Since the wavelength of light is much smaller than the dimensions of most obstacles; we do not encounter diffraction effects of light in everyday observations.  
+"However, the finite resolution of our eye or of optical instruments such as telescopes or microscopes is limited due to the phenomenon of diffraction.  "
+Indeed the colors that you see when a CD is viewed is due to diffraction effects.  
+We will now discuss the phenomenon of diffraction.  
+"In the discussion of Young's experiment, we stated that a single narrow slit acts as a new source from which light spreads out.  "
+"Even before Young, early experimenters — including Newton — had noticed that light spreads out from narrow holes and slits.  "
+"Since each point on the string moves on a straight line, the wave is also referred to as a linearly polarised wave.  "
+"Further, the string always remains confined to the x-y plane and therefore it is also referred to as a plane polarised wave.  "
+In a similar manner we can consider the vibration of the string in the x - z plane generating a z-polarised wave whose displacement will be given by.  
+"Finally, if the plane of vibration of the string is changed randomly in very short intervals of time, then we have what is known as an unpolarised wave.  "
+"Thus, for an unpolarised wave the displacement will be randomly changing with time though it will always be perpendicular to the direction of propagation.  "
+"Light waves are transverse in nature; i.e., the electric field associated with a propagating light wave is always at right angles to the direction of propagation of the wave.  "
+This can be easily demonstrated using a simple polaroid.  
+"You must have seen thin plastic like sheets, which are called polaroids.  "
+A polaroid consists of long chain molecules aligned in a particular direction.  
+"The phenomena of interference, diffraction and polarisation were explained in a natural and satisfactory way by the wave picture of light.  "
+"According to this picture, light is an electromagnetic wave consisting of electric and magnetic fields with continuous distribution of energy over the region of space over which the wave is extended.  "
+Let us now see if this wave picture of light can explain the observations on photoelectric emission given in the previous section.  
+"According to the wave picture of light, the free electrons at the surface of the metal  -LRB- over which the beam of radiation falls -RRB-  absorb the radiant energy continuously.  "
+"The greater the intensity of radiation, the greater are the amplitude of electric and magnetic fields.  "
+"Consequently, the greater the intensity, the greater should be the energy absorbed by each electron.  "
+"In this picture, the maximum kinetic energy of the photoelectrons on the surface is then expected to increase with increase in intensity.  "
+"A threshold frequency, therefore, should not exist.  "
+"These expectations of the wave theory directly contradict observations  -LRB- i -RRB- , (ii) and (iii) given at the end of sub-section 11.4.3.  "
+"In Chapter 12, the de Broglie relation will be seen to justify Bohr's postulate on quantisation of angular momentum of electron in an atom.  "
+"Figure 11.6 shows a schematic diagram of  -LRB- a -RRB-  a localized wave packet, and (b) an extended wave with fixed wavelength.  "
+"It is worth pausing here to reflect on just what a matter wave associated with a particle, say, an electron, means.  "
+"Actually, a truly satisfactory physical understanding of the dual nature of matter and radiation has not emerged so far.  "
+"The great founders of quantum mechanics  -LRB- Niels Bohr, Albert Einstein, and many others -RRB-  struggled with this and related concepts for long.  "
+Still the deep physical interpretation of quantum mechanics continues to be an area of active research.  
+"Despite this, the concept of matter wave has been mathematically introduced in modern quantum mechanics with great success.  "
+An important milestone in this connection was when Max Born  -LRB- 1882 - 1970 -RRB-  suggested a probability interpretation to the matter wave amplitude.  
+"According to this, the intensity  -LRB- square of the amplitude -RRB-  of the matter wave at a point determines the probability density of the particle at that point.  "
+These are represented by the formulae:  
+"The Lyman series is in the ultraviolet, and the Paschen and Brackett series are in the infrared region.  "
+"The Balmer formula Eq.  -LRB- 12.5 -RRB-  may be written in terms of frequency of the light, recalling that  "
+"There are only a few elements  -LRB- hydrogen, singly ionised helium, and doubly ionised lithium -RRB-  whose spectra can be represented by simple formula like Eqs. (12.5) — (12.9).  "
+Equations  -LRB- 12.5 -RRB-  — (12.9) are useful as they give the wavelengths that hydrogen atoms radiate or absorb.  
+"However, these results are empirical and do not give any reasoning why only certain frequencies are observed in the hydrogen spectrum.  "
+"However, there are some fundamental differences between the two situations.  "
+"While the planetary system is held by gravitational force, the nucleus-electron system being charged objects, interact by Coulomb's Law of force.  "
+We know that an object which moves in a circle is being constantly accelerated — the acceleration being centripetal in nature.  
+"called pencil lasers, which serve as pointers.  "
+"There are also lasers of different power, suitable for delicate surgery of eye or glands in the stomach.  "
+"Finally, there are lasers which can cut or weld steel.  "
+Light is emitted from a source in the form of packets of waves.  
+Light coming out from an ordinary source contains a mixture of many wavelengths.  
+There is also no phase relation between the various waves.  
+"Therefore, such light, even if it is passed through an aperture, spreads very fast and the beam size increases rapidly with distance.  "
+"In the case of laser light, the wavelength of each packet is almost the same.  "
+Also the average length of the packet of waves is much larger.  
+This means that there is better phase correlation over a longer duration of time.  
+Thus the current increases.  
+"Due to the applied voltage, electrons from n-side cross the depletion region and reach p-side  -LRB- where they are minority carries -RRB- .  "
+"Similarly, holes from p-side cross the junction and reach the n-side  -LRB- where they are minority carries -RRB- .  "
+This process under forward bias is known as minority carrier injection.  
+"At the junction boundary, on each side, the minority carrier concentration increases significantly compared to the locations far from the junction.  "
+"Due to this concentration gradient, the injected electrons on p-side diffuse from the junction edge of p-side to the other end of p-side.  "
+"Likewise, the injected holes on n-side diffuse from the junction edge of n-side to the other end of n-side  -LRB- Fig. 14.14 -RRB- .  "
+This motion of charged carriers on either side gives rise to current.  
+The total diode forward current is sum of hole diffusion current and conventional current due to electron diffusion.  
+The magnitude of this current is usually in mA.  
+Solar cells are used to power electronic devices in satellites and space vehicles and also as power supply to some calculators.  
+Production of low-cost photovoltaic cells for large-scale solar energy is a topic for research.  
+"Since our study is limited to only BJT, we shall use the word transistor for BJT without any ambiguity.  "
+A transistor has three doped regions forming two p-n junctions between them.  
+"Obviously, there are two types of transistors, as shown in Fig. 14.27.  "
+ -LRB- i -RRB-  n-p-n transistor: Here two segments of n-type semiconductor (emitter and collector) are separated by a segment of p-type semiconductor (base).  
+ -LRB- ii -RRB-  p-n-p transistor: Here two segments of p-type semiconductor (termed as emitter and collector) are separated by a segment of n-type semiconductor (termed as base).  
+The schematic representations of an n-p-n and a p-n-p configuration are shown in Fig. 14.27  -LRB- a -RRB- .  
+All the three segments of a transistor have different thickness and their doping levels are also different.  
+In the schematic symbols used for representing p-n-p and n-p-n transistors  -LRB- Fig. 14.27(b -RRB- ) the arrowhead shows the direction of conventional current in the transistor.  
+The change in IC due to a change in IB causes a change in VCE and the voltage drop across the resistor R L because VCC is fixed.  
+The change in VCE is the output voltage v0.  
+The negative sign represents that output voltage is opposite with phase with the input voltage.  
+From the discussion of the transistor characteristics you have seen that there is a current gain βac in the CE configuration.  
+Here we have also seen the voltage gain Av.  
+Therefore the power gain Ap can be expressed as the product of the current gain and voltage gain.  
+"Since βac and Av are greater than 1, we get ac power gain.  "
+However it should be realized that transistor is not a power generating device.  
+The energy for the higher ac power at the output is supplied by the battery.  
+"In an amplifier, we have seen that a sinusoidal input is given which appears as an amplified signal in the output.  "

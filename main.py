@@ -8,29 +8,73 @@ Original file is located at
 """
 
 import torch
+import argparse
 import torch.nn as nn
-from torch.autograd import gradcheck
-import torch.nn.functional as F
 import torch.optim as optim
 
 from torchtext.datasets import TranslationDataset
 from torchtext.data import Field, BucketIterator
+from model import Encoder, TargetEncoder, Attention, Decoder
 
 import spacy
 import numpy as np
-
+import sys
 import random
 import math
 import time
 
-SEED = 1234
+parser = argparse.ArgumentParser()
 
+parser.add_argument(
+    "--seed", default=1234, help="Initialize with random SEED", type=int)
+parser.add_argument(
+    "--embed", default=128, help="Embedding dimension", type=int)
+parser.add_argument(
+    "--hidden", default=128, help="Hidden dimension", type=int)
+parser.add_argument(
+    "--segment", default=128, help="Segment RNN dimension", type=int)
+parser.add_argument(
+    "--layers", default=2, help="Number of layers", type=int)
+parser.add_argument(
+    "--dropout", default=0.4, help="Dropout value", type=float)
+parser.add_argument(
+    "--segmentThresold", default=4, help="Maximum length for a segment", type=int)
+parser.add_argument(
+    "--maxLen", default=40, help="Maximum decoding length", type=int)
+parser.add_argument(
+    "--data", default='data/IITB_instance', help="Path of dataset")
+parser.add_argument(
+    "--source", default='.en', help="Source language (extension of data files)")
+parser.add_argument(
+    "--target", default='.hi', help="Target language (extension of data files)")
+parser.add_argument(
+    "--clip", default=1, help="Clip gradient value", type=float)
+parser.add_argument(
+    "--epochs", default=12, help="Number of epochs", type=int)
+parser.add_argument(
+    "--batch", default=8, help="Batch Size", type=int)
+parser.add_argument(
+    "--saveTo", default='npmt-model.pt', help="save model to path", type=str)
+parser.add_argument(
+    "--loadFrom", default='npmt-model.pt', help="load model from path", type=str)
+
+args = parser.parse_args(sys.argv[1:])
+
+SEED = args.seed
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
 torch.cuda.manual_seed(SEED)
 torch.backends.cudnn.deterministic = True
 torch.autograd.set_detect_anomaly(True)
+
+embed_dim = args.embed
+hidden_dim = args.hidden
+segment_dim = args.segment
+n_layers = args.layers
+dropout = args.dropout
+segment_threshold = args.segmentThresold
+MAX_LENGTH = args.maxLen
 
 spacy_en = spacy.load('en')
 
@@ -57,9 +101,9 @@ TRG = Field(tokenize = tokenize_hi,
             lower = True)
 
 train_data, valid_data, test_data  = TranslationDataset.splits(
-                                      path='data/IITB_instance',
+                                      path=args.data,
                                       validation='dev',
-                                      exts = ('.en', '.hi'), 
+                                      exts = (args.source, args.target), 
                                       fields = (SRC, TRG))
 
 print(f"Number of training examples: {len(train_data.examples)}")
@@ -78,7 +122,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 device 
 
-BATCH_SIZE = 2
+BATCH_SIZE = args.batch
 
 train_iterator, valid_iterator, test_iterator = BucketIterator.splits(
     (train_data, valid_data, test_data),
@@ -88,202 +132,8 @@ train_iterator, valid_iterator, test_iterator = BucketIterator.splits(
 """# EnCoder Parameters"""
 
 input_dim = len(SRC.vocab)
-embed_dim = 10
-hidden_dim = 10
-segment_dim = 10
-n_layers = 2
-dropout = 0.4
-segment_threshold = 5
-temperature = 0.1
-MAX_LENGTH = 50
-
-"""# Building Encoder"""
-
-class Encoder(nn.Module):
-  def __init__(self,input_dim,embed_dim,hidden_dim,segment_dim,n_layers,dropout,segment_threshold,device):
-    super().__init__()
-    self.input_dim = input_dim
-    self.hidden_dim = hidden_dim
-    self.n_layers = n_layers
-    self.segment_threshold = segment_threshold
-    self.segment_dim = segment_dim
-    self.device = device
-    
-    self.embedding = nn.Embedding(input_dim,embed_dim)
-    self.rnn = nn.GRU(embed_dim,hidden_dim,n_layers,dropout=dropout,bidirectional=True)
-
-    self.segmentRnn = nn.GRU(hidden_dim*2,segment_dim,n_layers,dropout=dropout)
-    # self.fc = nn.Linear(hidden_dim*2,hidden_dim)
-    self.dropout = nn.Dropout(dropout)
-
-  def forward(self,input):
-
-    #input = [src len, batch size]
-    embedded = self.dropout(self.embedding(input))
-    #embedded = [src len, batch size, emb dim]
-
-    outputs, hidden = self.rnn(embedded)
-    #outputs = [src len, batch size, hid dim * num directions]
-    #hidden = [n layers * num directions, batch size, hid dim]
-        
-    segment_encoding, hidden = self.segment_rnn(outputs)
-    #segment_encoding = [src len* (src len+1)/2, batch size, segment_dim*num_directions]
-    #hidden = [n layers * num_directions, batch size, hid dim]
-
-    # hidden = torch.tanh(self.fc(torch.cat((hidden[-2],hidden[-1]),dim=1)))
-
-    return segment_encoding,hidden
-
-  def segment_rnn(self,outputs):
-    N = outputs.shape[0]
-    batch_size = outputs.shape[1]
-    dp_forward = torch.zeros(N, N, batch_size, self.segment_dim).to(self.device)
-    dp_backward = torch.zeros(N, N, batch_size, self.segment_dim).to(self.device)
-
-    for i in range(N):
-      hidden_forward = torch.randn(self.n_layers, batch_size, self.hidden_dim).to(self.device)
-      for j in range(i, min(N, i + self.segment_threshold)):
-        
-        # outputs[j] = [batch size, hidden_dim* num_direction]
-        next_input = outputs[j].unsqueeze(0)
-        # next_input = [1, batch size, hidden_dim* num_direction]
-        
-        out, hidden_forward = self.segmentRnn(next_input,hidden_forward)
-        #out = [1, batch size, segment_dim]
-        #hidden_forward = [n layers , batch size, hid dim]
-
-        dp_forward[i][j] = out.squeeze(0)
-
-    for i in range(N):
-      hidden_backward = torch.randn(self.n_layers, batch_size, self.hidden_dim).to(self.device)
-      for j in range(i, max(-1, i - self.segment_threshold), -1):
-
-        # outputs[j] = [batch size, hidden_dim* num_direction]
-        next_input = outputs[j].unsqueeze(0)
-        # next_input = [1, batch size, hidden_dim* num_direction]
-        
-        out, hidden_backward = self.segmentRnn(next_input,hidden_backward)
-        #out = [1, batch size, segment_dim]
-        #hidden_backward = [n layers , batch size, hid dim]
-        
-        dp_backward[j][i] = out.squeeze(0)
-    
-    dp = torch.cat((dp_forward,dp_backward),dim=3)
-    dp_indices = torch.triu_indices(N, N)
-    dp = dp[dp_indices[0],dp_indices[1]]
-    return dp,torch.cat((hidden_forward,hidden_backward),dim=2)
-
-"""# Defining Attn Network"""
-'''
-Attention is calculated over encoder_outputs S(i,j) and context representation
-of previously generated segments (from Target Decoder)
-
-'''
-class Attention(nn.Module):
-  def __init__(self, enc_hid_dim, dec_hid_dim):
-    super().__init__()
-
-    self.attn = nn.Linear((enc_hid_dim * 2) + dec_hid_dim, dec_hid_dim)
-    self.v = nn.Linear(dec_hid_dim, 1, bias = False)
-
-  def forward(self, encoder_outputs, output_target_decoder):
-      
-    #encoder_outputs = [no. of segments, batch size, enc hid dim * 2]
-    #output_target_decoder = [batch size, dec hid dim]
-    batch_size = encoder_outputs.shape[1]
-    src_len = encoder_outputs.shape[0]
-    
-    #repeat decoder hidden state src_len times
-    output_target_decoder = output_target_decoder.unsqueeze(1).repeat(1, src_len, 1)
-    
-    encoder_outputs = encoder_outputs.permute(1, 0, 2)
-    
-    #output_target_decoder = [batch size, no. of segments, dec hid dim]
-    #encoder_outputs = [batch size, no. of segments, enc hid dim * 2]
-    
-    energy = torch.tanh(self.attn(torch.cat((output_target_decoder, encoder_outputs), dim = 2))) 
-    #energy = [batch size,  no. of segments, dec hid dim]
-    attention = self.v(energy).squeeze(2)
-    #attention= [batch size,  no. of segments]
-    a = F.softmax(attention, dim=1)
-    #a = [batch size,  no. of segments]
-    a = a.unsqueeze(1)
-    #a = [batch size, 1,  no. of segments]
-    weighted = torch.bmm(a, encoder_outputs)
-    #weighted = [batch size, 1, enc hid dim * 2]
-    weighted = weighted.permute(1, 0, 2)
-    #weighted = [1, batch size, enc hid dim * 2]
-    return weighted
-    
-
-"""# Decoder Parameters"""
-
 output_dim = len(TRG.vocab)
-DEC_HEADS = 8
-DEC_PF_DIM = 512
-# embed_dim = 256
-# hidden_dim = 256
-# segment_dim = 256
-# n_layers = 6
-# dropout = 0.4
-# segment_threshold = 5
 
-"""# Building Decoder"""
-
-
-class TargetEncoder(nn.Module):
-  def __init__(self, output_dim, embed_dim, hidden_dim,segment_dim,n_layers, dropout):
-    super().__init__()
-    self.output_dim = output_dim
-    self.n_layers = n_layers
-    self.embedding = nn.Embedding(self.output_dim, embed_dim)
-    self.rnn = nn.GRU(embed_dim,hidden_dim,n_layers,dropout=dropout)
-    self.dropout = nn.Dropout(dropout)
-
-  def forward(self, input):
-          
-    #input = [target_len,batch size]
-    #hidden = [batch size, dec hid dim]
-    #encoder_outputs = [src len, batch size, enc hid dim * 2]
-    
-    embedded = self.dropout(self.embedding(input))
-    #embedded = [target_len, batch size, emb dim]
-    
-    output_target_decoder,hidden_target_decoder = self.rnn(embedded)
-    #output_target_decoder = [target_len, batch size, hidden_dim]
-    #hidden_target_decoder = [n layers , batch size, hidden_dim]
-    return output_target_decoder,hidden_target_decoder
-  
-
-class Decoder(nn.Module):
-  def __init__(self, output_dim, embed_dim, hidden_dim,segment_dim,n_layers, dropout):
-    super().__init__()
-    self.output_dim = output_dim
-    self.n_layers = n_layers
-    self.hidden_dim = hidden_dim
-    self.embedding = nn.Embedding(self.output_dim, embed_dim)
-    self.segmentRnn = nn.GRU(hidden_dim,hidden_dim,n_layers,dropout=dropout)
-    self.fc_out = nn.Linear((hidden_dim * 2) + hidden_dim + embed_dim, self.output_dim)
-    self.soft = nn.LogSoftmax(dim=1)
-    self.dropout = nn.Dropout(dropout)
-  
-  def forward(self, input, weighted):
-    
-    embedded = self.dropout(self.embedding(input))
-    output, hidden = self.segmentRnn(embedded)
-    
-    output = output.squeeze(0)
-    weighted = weighted.squeeze(0)
-    embedded = embedded.squeeze(0)
-    
-    prediction = self.soft(self.fc_out(torch.cat((output, weighted, embedded), dim = 1)))
-    #prediction = [batch size, output dim]
-    # probabilities = self.soft(prediction)
-    # phraseProb *= torch.exp(probabilities[torch.arange(batch_size),input[t+1]])
-    
-    return prediction
-      
-      
 class NP2MT(nn.Module):
   def __init__(self, encoder, attention, targetEncoder, decoder, device):
     super().__init__()
@@ -346,16 +196,9 @@ class NP2MT(nn.Module):
     del phraseProb
     return outFinal
   
-  def forward_predict(self, src, trg):
-    
-    #src = [src len, batch size]
-    #trg = [trg len, batch size]
-    #teacher_forcing_ratio is probability to use teacher forcing
-    #e.g. if teacher_forcing_ratio is 0.75 we use teacher forcing 75% of the time
-    
+  def forward_predict(self, src, reference):
+      
     batch_size = src.shape[1]
-    trg_len = trg.shape[0]
-    trg_vocab_size = self.decoder.output_dim
 
     sos_symbol = TRG.vocab.stoi['<sos>']    
     sop_symbol = TRG.vocab.stoi['<sop>']
@@ -370,18 +213,16 @@ class NP2MT(nn.Module):
       output_target_decoder,hidden_target_decoder = self.targetEncoder(trg)
       weighted = self.attention(encoder_outputs, output_target_decoder[-1])
       
-      decoder_input = torch.tensor([[sop_symbol]]).to(self.device)
-      
       num_segments = 0
       decoded_words = []
 
-      while decoder_input != eos_symbol and len(decoded_words)<= MAX_LENGTH:
+      while len(decoded_words)<= MAX_LENGTH:
         new_segment = False
+        decoder_input = torch.tensor([[sop_symbol]]).to(self.device)
         for j in range(segment_threshold):
           probabilities = self.decoder(decoder_input.view(-1,1), weighted)
           prob, decoder_output = torch.max(probabilities,1)
           if decoder_output == eop_symbol or decoder_output == eos_symbol:
-            decoder_input = decoder_output
             break
           else:
             if not new_segment:
@@ -391,15 +232,36 @@ class NP2MT(nn.Module):
           decoder_input = decoder_output
           decoded_words.append(decoder_output)
         
-        if decoder_input == eos_symbol:
+        if decoder_output == eos_symbol:
           break
-        decoder_input = torch.tensor([[sop_symbol]]).to(self.device)
         trg = torch.tensor(decoded_words).view(-1,1).to(self.device)
         output_target_decoder,hidden_target_decoder = self.targetEncoder(trg)
         weighted = self.attention(encoder_outputs, output_target_decoder[-1])
       
+      
+      # print("Source Input")
+      outString = ""
+      for i in src[:,b]:
+        outString += SRC.vocab.itos[i]
+        outString += " "
+      with open('predictions/src.txt', 'a') as f:
+        print(outString,file=f)
+              
+      # print("Reference output")
+      outString = ""
+      for i in reference[:,b]:
+        outString += TRG.vocab.itos[i]
+        outString += " "
+      with open('predictions/ref.txt', 'a') as f:
+        print(outString,file=f)
+
+      # print("model's output")
+      outString = ""
       for i in decoded_words:
-        print(TRG.vocab.itos[i],sep=' ')
+        outString += TRG.vocab.itos[i]
+        outString += " "
+      with open('predictions/sys.txt', 'a') as f:
+        print(outString,file=f)
 
   
 attn = Attention(hidden_dim, hidden_dim)
@@ -416,13 +278,6 @@ def init_weights(m):
     else:
       nn.init.constant_(param.data, 0)
 
-def repackage_hidden(h):
-    """Wraps hidden states in new Tensors, to detach them from their history."""
-    if isinstance(h, torch.Tensor):
-        return h.detach()
-    else:
-        return tuple(repackage_hidden(v) for v in h)
-      
 model.apply(init_weights)
 
 def count_parameters(model):
@@ -431,10 +286,8 @@ def count_parameters(model):
 print(f'The model has {count_parameters(model):,} trainable parameters')
 
 optimizer = optim.Adam(model.parameters())
-TRG_PAD_IDX = TRG.vocab.stoi[TRG.pad_token]
-criterion = nn.CrossEntropyLoss(ignore_index = TRG_PAD_IDX)
 
-def train(model, iterator, optimizer, criterion, clip):
+def train(model, iterator, optimizer, clip):
   
   model.train()
   epoch_loss = 0
@@ -451,10 +304,14 @@ def train(model, iterator, optimizer, criterion, clip):
     torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
     optimizer.step()
     epoch_loss += loss.item()
+    del loss
+    del output
+    # print(torch.cuda.memory_cached()//(1024*1024))
+    torch.cuda.empty_cache()
     
   return epoch_loss / len(iterator)
 
-def evaluate(model, iterator, criterion):
+def evaluate(model, iterator):
     
   model.eval()
   epoch_loss = 0
@@ -463,12 +320,24 @@ def evaluate(model, iterator, criterion):
     for i, batch in enumerate(iterator):
         src = batch.src
         trg = batch.trg
+        output = model(src, trg) #turn off teacher forcing
+        loss = -output.mean()
+        epoch_loss += loss.item()
+        del loss
+        del output
+        torch.cuda.empty_cache()
+  return epoch_loss / len(iterator)
+
+
+def predict(model, iterator):
+    
+  model.eval()
+  
+  with torch.no_grad():
+    for i, batch in enumerate(iterator):
+        src = batch.src
+        trg = batch.trg
         model.forward_predict(src, trg) #turn off teacher forcing
-        # loss = -output.mean()
-        print("ok")
-        # epoch_loss += loss.item()
-      
-  # return epoch_loss / len(iterator)
 
 def epoch_time(start_time, end_time):
   elapsed_time = end_time - start_time
@@ -476,8 +345,8 @@ def epoch_time(start_time, end_time):
   elapsed_secs = int(elapsed_time - (elapsed_mins * 60))
   return elapsed_mins, elapsed_secs
 
-N_EPOCHS = 2
-CLIP = 1
+N_EPOCHS = args.epochs
+CLIP = args.clip
 
 best_valid_loss = float('inf')
 
@@ -485,8 +354,8 @@ for epoch in range(N_EPOCHS):
     
   start_time = time.time()
   
-  train_loss = train(model, train_iterator, optimizer, criterion, CLIP)
-  valid_loss = evaluate(model, valid_iterator, criterion)
+  train_loss = train(model, train_iterator, optimizer, CLIP)
+  valid_loss = evaluate(model, valid_iterator)
   
   end_time = time.time()
   
@@ -494,15 +363,13 @@ for epoch in range(N_EPOCHS):
   
   if valid_loss < best_valid_loss:
     best_valid_loss = valid_loss
-    torch.save(model.state_dict(), 'npmt-model.pt')
+    torch.save(model.state_dict(), 'npmt-epoch{}.pt'.format(epoch+1))
   
   print(f'Epoch: {epoch+1:02} | Time: {epoch_mins}m {epoch_secs}s')
   print(f'\tTrain Loss: {train_loss:.3f} | Train PPL: {math.exp(train_loss):7.3f}')
   print(f'\t Val. Loss: {valid_loss:.3f} |  Val. PPL: {math.exp(valid_loss):7.3f}')
 
-# model.load_state_dict(torch.load('npmt-model.pt'))
+model.load_state_dict(torch.load(args.loadFrom))
+predict(model, test_iterator)
 
-test_loss = evaluate(model, test_iterator, criterion)
-
-print(f'| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |')
 
