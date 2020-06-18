@@ -11,6 +11,7 @@ import torch
 import argparse
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.tensorboard import SummaryWriter
 
 from torchtext.datasets import TranslationDataset
 from torchtext.data import Field, BucketIterator
@@ -77,6 +78,7 @@ segment_threshold = args.segmentThresold
 MAX_LENGTH = args.maxLen
 
 spacy_en = spacy.load('en')
+writer = SummaryWriter()
 
 def tokenize_en(text):
     """
@@ -287,7 +289,7 @@ print(f'The model has {count_parameters(model):,} trainable parameters')
 
 optimizer = optim.Adam(model.parameters())
 
-def train(model, iterator, optimizer, clip):
+def train(model, iterator, optimizer, clip, epoch):
   
   model.train()
   epoch_loss = 0
@@ -298,6 +300,7 @@ def train(model, iterator, optimizer, clip):
     output = model(src, trg)
     
     loss = -output.mean()
+    writer.add_scalar("Loss/train", loss, epoch)
     print("loss is",loss)
     loss.backward()
     epoch_loss += loss.item()
@@ -311,7 +314,7 @@ def train(model, iterator, optimizer, clip):
     
   return epoch_loss / len(iterator)
 
-def evaluate(model, iterator):
+def evaluate(model, iterator, epoch):
     
   model.eval()
   epoch_loss = 0
@@ -322,6 +325,7 @@ def evaluate(model, iterator):
         trg = batch.trg
         output = model(src, trg) #turn off teacher forcing
         loss = -output.mean()
+        writer.add_scalar("Loss/valid", loss, epoch)
         epoch_loss += loss.item()
         del loss
         del output
@@ -354,8 +358,10 @@ for epoch in range(N_EPOCHS):
     
   start_time = time.time()
   
-  train_loss = train(model, train_iterator, optimizer, CLIP)
-  valid_loss = evaluate(model, valid_iterator)
+  train_loss = train(model, train_iterator, optimizer, CLIP, epoch)
+  writer.flush()
+  valid_loss = evaluate(model, valid_iterator, epoch)
+  writer.flush()
   
   end_time = time.time()
   
@@ -368,6 +374,8 @@ for epoch in range(N_EPOCHS):
   print(f'Epoch: {epoch+1:02} | Time: {epoch_mins}m {epoch_secs}s')
   print(f'\tTrain Loss: {train_loss:.3f} | Train PPL: {math.exp(train_loss):7.3f}')
   print(f'\t Val. Loss: {valid_loss:.3f} |  Val. PPL: {math.exp(valid_loss):7.3f}')
+
+writer.close()
 
 model.load_state_dict(torch.load(args.loadFrom))
 predict(model, test_iterator)
