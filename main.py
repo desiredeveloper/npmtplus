@@ -369,7 +369,7 @@ for epoch in range(N_EPOCHS):
   
   if valid_loss < best_valid_loss:
     best_valid_loss = valid_loss
-    torch.save(model.state_dict(), 'npmt-epoch{}.pt'.format(epoch+1))
+    torch.save(model.state_dict(), 'checkpoints/npmt-epoch{}.pt'.format(epoch+1))
   
   print(f'Epoch: {epoch+1:02} | Time: {epoch_mins}m {epoch_secs}s')
   print(f'\tTrain Loss: {train_loss:.3f} | Train PPL: {math.exp(train_loss):7.3f}')
