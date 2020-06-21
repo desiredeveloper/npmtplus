@@ -37,6 +37,8 @@ parser.add_argument(
 parser.add_argument(
     "--layers", default=2, help="Number of layers", type=int)
 parser.add_argument(
+    "--lr", default=0.001, help="Learning Rate", type=float)
+parser.add_argument(
     "--dropout", default=0.4, help="Dropout value", type=float)
 parser.add_argument(
     "--segmentThresold", default=4, help="Maximum length for a segment", type=int)
@@ -52,6 +54,8 @@ parser.add_argument(
     "--clip", default=1, help="Clip gradient value", type=float)
 parser.add_argument(
     "--epochs", default=12, help="Number of epochs", type=int)
+parser.add_argument(
+    "--dictionary", default=True, help="Should use dictionary", type=bool)
 parser.add_argument(
     "--batch", default=8, help="Batch Size", type=int)
 parser.add_argument(
@@ -114,8 +118,8 @@ print(f"Number of testing examples: {len(test_data.examples)}")
 
 vars(train_data.examples[0])
 
-SRC.build_vocab(train_data, min_freq = 2)
-TRG.build_vocab(train_data, min_freq = 2,specials=['<pad>','<sop>','<eop>'])
+SRC.build_vocab(train_data, min_freq = 1)
+TRG.build_vocab(train_data, min_freq = 1,specials=['<pad>','<sop>','<eop>'])
 
 print(f"Unique tokens in source (en) vocabulary: {len(SRC.vocab)}")
 print(f"Unique tokens in target (hi) vocabulary: {len(TRG.vocab)}")
@@ -172,7 +176,7 @@ class NP2MT(nn.Module):
       index = 0
       for phraseLen in range(min(end,segment_threshold),0,-1):
         start = end - phraseLen + 1
-        weighted = self.attention(encoder_outputs, output_target_decoder[start-1])
+        weighted, attn = self.attention(encoder_outputs, output_target_decoder[start-1])
         
         sop_vector = (torch.ones(1,batch_size,dtype=torch.int64)*sop_symbol).to(self.device)
         input_phrase = trg[start:end+1,:]
@@ -198,14 +202,33 @@ class NP2MT(nn.Module):
     del phraseProb
     return outFinal
   
-  def forward_predict(self, src, reference):
+  def attendedPhrase(self, attn, src_len):
+    
+    X = torch.zeros((src_len,src_len)).to(self.device)
+    X[torch.triu_indices(src_len,src_len)] = attn
+    maxIndex = X.argmax()
+    i = maxIndex/src_len
+    j = maxIndex%src_len
+    # i = src_len - 2 - int(sqrt(-8*k + 4*src_len*(src_len-1)-7)/2.0 - 0.5)
+    # j = k + i + 1 - src_len*(src_len-1)/2 + (src_len-i)*((src_len-i)-1)/2
+    return i, j
+    
+  def buildPhrase(self, src, start, end):
+    outString = ""
+    for i in src(start,end):
+      outString += SRC.vocab.itos[i]
+      outString += " "
+    return outString
+    
+  def forward_predict(self, src, reference, dictionary):
       
     batch_size = src.shape[1]
 
     sos_symbol = TRG.vocab.stoi['<sos>']    
     sop_symbol = TRG.vocab.stoi['<sop>']
     eop_symbol = TRG.vocab.stoi['<eop>']
-    eos_symbol = TRG.vocab.stoi['<eos>']    
+    eos_symbol = TRG.vocab.stoi['<eos>']
+    unk_symbol = TRG.vocab.stoi['<unk>']
     #encoder_outputs is representation of all phrases states of the input sequence, back and forwards
     #hidden is the final forward and backward hidden states, passed through a linear layer (batch_size*hidden_dim)
     
@@ -213,32 +236,48 @@ class NP2MT(nn.Module):
       encoder_outputs, hidden = self.encoder(src[:,b].view(-1,1))
       trg = torch.tensor([[sos_symbol]]).to(self.device)
       output_target_decoder,hidden_target_decoder = self.targetEncoder(trg)
-      weighted = self.attention(encoder_outputs, output_target_decoder[-1])
-      
+      weighted, attn = self.attention(encoder_outputs, output_target_decoder[-1])
       num_segments = 0
       decoded_words = []
 
+      avlDictionary = False
       while len(decoded_words)<= MAX_LENGTH:
         new_segment = False
-        decoder_input = torch.tensor([[sop_symbol]]).to(self.device)
-        for j in range(segment_threshold):
-          probabilities = self.decoder(decoder_input.view(-1,1), weighted)
-          prob, decoder_output = torch.max(probabilities,1)
-          if decoder_output == eop_symbol or decoder_output == eos_symbol:
-            break
-          else:
-            if not new_segment:
-              num_segments = num_segments + 1
-              new_segment = True
+        
+        if avlDictionary:
           
-          decoder_input = decoder_output
-          decoded_words.append(decoder_output)
+          li = list(outPhrase.split(" "))
+          indexli = map(lambda x: TRG.vocab.stoi(x),li)
+          decoded_words.extend(indexli)
+        
+        else:
+        
+          decoder_input = torch.tensor([[sop_symbol]]).to(self.device)
+          for j in range(segment_threshold):
+            probabilities = self.decoder(decoder_input.view(-1,1), weighted)
+            prob, decoder_output = torch.max(probabilities,1)
+            if decoder_output == eop_symbol or decoder_output == eos_symbol:
+              break
+            else:
+              if not new_segment:
+                num_segments = num_segments + 1
+                new_segment = True
+            
+            decoder_input = decoder_output
+            decoded_words.append(decoder_output)
         
         if decoder_output == eos_symbol:
           break
         trg = torch.tensor(decoded_words).view(-1,1).to(self.device)
         output_target_decoder,hidden_target_decoder = self.targetEncoder(trg)
-        weighted = self.attention(encoder_outputs, output_target_decoder[-1])
+        weighted, attn = self.attention(encoder_outputs, output_target_decoder[-1])
+        
+        src_start, src_end = attendedPhrase(attn, src.shape[0])
+        outPhrase = buildPhrase(src[:,b],src_start,src_end)
+        if unk_symbol in src[:,b][src_start: src_end] and dictionary.get(outPhrase) is not None:
+          avlDictionary = True
+          
+
       
       
       # print("Source Input")
@@ -287,7 +326,7 @@ def count_parameters(model):
 
 print(f'The model has {count_parameters(model):,} trainable parameters')
 
-optimizer = optim.Adam(model.parameters())
+optimizer = optim.Adam(model.parameters(),lr=args.lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False)
 
 def train(model, iterator, optimizer, clip, epoch):
   
@@ -333,7 +372,7 @@ def evaluate(model, iterator, epoch):
   return epoch_loss / len(iterator)
 
 
-def predict(model, iterator):
+def predict(model, iterator, dictionary):
     
   model.eval()
   
@@ -341,7 +380,7 @@ def predict(model, iterator):
     for i, batch in enumerate(iterator):
         src = batch.src
         trg = batch.trg
-        model.forward_predict(src, trg) #turn off teacher forcing
+        model.forward_predict(src, trg, dictionary) #turn off teacher forcing
 
 def epoch_time(start_time, end_time):
   elapsed_time = end_time - start_time
@@ -378,6 +417,11 @@ for epoch in range(N_EPOCHS):
 writer.close()
 
 model.load_state_dict(torch.load(args.loadFrom))
-predict(model, test_iterator)
 
+if args.dictionary:
+  import csv
+  with open('dict.csv', mode='r') as infile:
+    reader = csv.reader(infile,delimiter='\t')
+    mydict = {rows[0]:rows[1] for rows in reader}
+  predict(model, test_iterator, mydict)
 

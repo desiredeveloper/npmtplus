@@ -118,7 +118,7 @@ class Attention(nn.Module):
     #weighted = [batch size, 1, enc hid dim * 2]
     weighted = weighted.permute(1, 0, 2)
     #weighted = [1, batch size, enc hid dim * 2]
-    return weighted
+    return weighted, attention
 
 """# Building Decoder"""
 

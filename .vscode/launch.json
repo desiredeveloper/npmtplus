@@ -8,6 +8,7 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
+            "args": ["--epochs","2","--loadFrom","checkpoints/npmt-epoch2.pt"],
             "program": "${file}",
             "console": "integratedTerminal"
         }
