@@ -8,9 +8,10 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "args": ["--epochs","2","--loadFrom","checkpoints/npmt-epoch2.pt"],
+            "args": ["--epochs","1","--loadFrom","checkpoints/npmt-epoch1.pt"],
             "program": "${file}",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }

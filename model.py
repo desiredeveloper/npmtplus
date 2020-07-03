@@ -74,8 +74,7 @@ class Encoder(nn.Module):
         dp_backward[j][i] = out.squeeze(0)
     
     dp = torch.cat((dp_forward,dp_backward),dim=3)
-    dp_indices = torch.triu_indices(N, N)
-    dp = dp[dp_indices[0],dp_indices[1]]
+    dp = dp[torch.triu(torch.ones(N, N)) == 1]
     return dp,torch.cat((hidden_forward,hidden_backward),dim=2)
 
 """# Defining Attn Network"""

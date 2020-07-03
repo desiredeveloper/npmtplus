@@ -88,7 +88,7 @@ def tokenize_en(text):
     """
     Tokenizes English text from a string into a list of strings (tokens) and reverses it
     """
-    return [tok.text for tok in spacy_en.tokenizer(text)][::-1]
+    return [tok.text for tok in spacy_en.tokenizer(text)]
 
 def tokenize_hi(text):
     """
@@ -205,7 +205,7 @@ class NP2MT(nn.Module):
   def attendedPhrase(self, attn, src_len):
     
     X = torch.zeros((src_len,src_len)).to(self.device)
-    X[torch.triu_indices(src_len,src_len)] = attn
+    X[torch.triu(torch.ones(src_len, src_len)) == 1] = attn
     maxIndex = X.argmax()
     i = maxIndex/src_len
     j = maxIndex%src_len
@@ -215,10 +215,10 @@ class NP2MT(nn.Module):
     
   def buildPhrase(self, src, start, end):
     outString = ""
-    for i in src(start,end):
-      outString += SRC.vocab.itos[i]
+    for i in range(start,end+1):
+      outString += SRC.vocab.itos[src[i]]
       outString += " "
-    return outString
+    return outString[:-1]
     
   def forward_predict(self, src, reference, dictionary):
       
@@ -244,42 +244,39 @@ class NP2MT(nn.Module):
       while len(decoded_words)<= MAX_LENGTH:
         new_segment = False
         
-        if avlDictionary:
+        decoder_input = torch.tensor([[sop_symbol]]).to(self.device)
+        for j in range(segment_threshold):
+          probabilities = self.decoder(decoder_input.view(-1,1), weighted)
+          prob, decoder_output = torch.max(probabilities,1)
+          if decoder_output == eop_symbol or decoder_output == eos_symbol:
+            break
+          else:
+            if not new_segment:
+              num_segments = num_segments + 1
+              new_segment = True
+              curr_segment = []
           
-          li = list(outPhrase.split(" "))
+          decoder_input = decoder_output
+          curr_segment.append(decoder_output)
+        
+        src_start, src_end = self.attendedPhrase(attn, src.shape[0])
+        outPhrase = self.buildPhrase(src[:,b],src_start,src_end)
+        if unk_symbol in curr_segment and dictionary.get(outPhrase) is not None:
+          dictTarget = dictionary.get(outPhrase)
+          li = list(dictTarget.split(" "))
           indexli = map(lambda x: TRG.vocab.stoi(x),li)
           decoded_words.extend(indexli)
-        
         else:
-        
-          decoder_input = torch.tensor([[sop_symbol]]).to(self.device)
-          for j in range(segment_threshold):
-            probabilities = self.decoder(decoder_input.view(-1,1), weighted)
-            prob, decoder_output = torch.max(probabilities,1)
-            if decoder_output == eop_symbol or decoder_output == eos_symbol:
-              break
-            else:
-              if not new_segment:
-                num_segments = num_segments + 1
-                new_segment = True
-            
-            decoder_input = decoder_output
-            decoded_words.append(decoder_output)
-        
+          decoded_words.extend(curr_segment)
+
         if decoder_output == eos_symbol:
           break
-        trg = torch.tensor(decoded_words).view(-1,1).to(self.device)
+        if len(curr_segment) > 0: # if the very first sop gives eop
+          trg = torch.cat(decoded_words).view(-1,1)
         output_target_decoder,hidden_target_decoder = self.targetEncoder(trg)
         weighted, attn = self.attention(encoder_outputs, output_target_decoder[-1])
         
-        src_start, src_end = attendedPhrase(attn, src.shape[0])
-        outPhrase = buildPhrase(src[:,b],src_start,src_end)
-        if unk_symbol in src[:,b][src_start: src_end] and dictionary.get(outPhrase) is not None:
-          avlDictionary = True
-          
-
-      
-      
+        
       # print("Source Input")
       outString = ""
       for i in src[:,b]:
